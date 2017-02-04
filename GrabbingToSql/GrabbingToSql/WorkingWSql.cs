@@ -14,7 +14,7 @@ namespace GrabbingToSql
         public WorkingWSql(string ConnectionStr)
         {
             Connection = new SqlConnection(ConnectionStr);
-
+            string QueryCreateTable1 = @"CREATE TABLE IF NOT EXISTS OverView (id INT ";
         }
     }
 }
