@@ -11,8 +11,8 @@ namespace GrabbingToSql
         {
             Dictionary<string, string> tempDic = new Dictionary<string, string>();
 
-            string path = System.IO.Path.GetDirectoryName(Application.ExecutablePath) + "\\f2.ini";
-            IniFile file = new IniFile(@"C:\Users\MTX\Documents\fields.ini");
+            string path = System.IO.Path.GetDirectoryName(Application.ExecutablePath) + "\\fields.ini";
+            IniFile file = new IniFile(path);
 
             string val = file.IniReadValue("Settings", "FieldCount");
             int fieldCount = int.Parse(val);
