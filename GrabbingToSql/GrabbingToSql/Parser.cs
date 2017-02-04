@@ -5,6 +5,7 @@ using System.Text;
 using HtmlAgilityPack;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using System.Data;
 
 namespace GrabbingToSql
 {
@@ -16,6 +17,15 @@ namespace GrabbingToSql
 
         private Dictionary<string, string> dicDB;
         private List<string> htmlFields;
+
+        public DataSet GetDataset()
+        {
+            DataSet temp = new DataSet();
+
+            
+
+            return temp;
+        }
 
         private void Init()
         {
