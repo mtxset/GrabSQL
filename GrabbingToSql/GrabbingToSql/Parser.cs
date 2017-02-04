@@ -6,6 +6,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
+
 namespace GrabbingToSql
 {
     class Parser
@@ -18,6 +19,7 @@ namespace GrabbingToSql
 
             sb = webConn.GetLastPage;
 
+   
             return sb;
         }
 
