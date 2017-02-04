@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 
+
 namespace GrabbingToSql
 {
     public class LoadConfig
@@ -11,7 +12,7 @@ namespace GrabbingToSql
         {
             Dictionary<string, string> tempDic = new Dictionary<string, string>();
 
-            string path = System.IO.Path.GetDirectoryName(Application.ExecutablePath) + "\\fields.ini";
+            string path = System.IO.Path.GetDirectoryName(Application.ExecutablePath) + "/fields.ini";
             IniFile file = new IniFile(path);
 
             string val = file.IniReadValue("Settings", "FieldCount");

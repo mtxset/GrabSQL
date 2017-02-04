@@ -15,16 +15,27 @@ namespace GrabbingToSql
         private HtmlWeb webClient;
         private String initialSite;
 
-        private Dictionary<string, string> dicDB;
         private List<string> htmlFields;
 
-        public DataSet GetDataset()
+        public void AddNewRow( Dictionary<string, string> dicDB, ref DataTable dataT )
         {
-            DataSet temp = new DataSet();
+           
+            dataT.Rows.Add(dicDB[htmlFields[0]],
+                           dicDB[htmlFields[1]],
+                           dicDB[htmlFields[2]],
+                           dicDB[htmlFields[3]]);
+        }
 
-            
+        public DataTable SetupTable()
+        {
 
-            return temp;
+            DataTable tb1 = new DataTable("Example1");
+            for (int i = 0; i < htmlFields.Count; i++)
+            {
+                tb1.Columns.Add(htmlFields[i]);
+            }
+
+            return tb1;
         }
 
         private void Init()
@@ -32,7 +43,6 @@ namespace GrabbingToSql
             htmlDoc = new HtmlDocument();
             webClient = new HtmlWeb();
             initialSite = "https://beta.companieshouse.gov.uk/";
-            dicDB = new Dictionary<string, string>();
             htmlFields = new List<string>();
             fillHtmlFields();
         }
@@ -51,9 +61,10 @@ namespace GrabbingToSql
             Init();
         }
 
-        public StringBuilder ParseHTMLCompaniesHouse(HtmlDocument data)
+        public Dictionary<string, string> ParseHTMLCompaniesHouse(HtmlDocument data)
         {
             StringBuilder sb = new StringBuilder();
+            Dictionary<string, string> dicDB = new Dictionary<string, string>();
 
             HtmlNodeCollection tempNodes = data.DocumentNode.SelectNodes("//dl");
 
@@ -84,7 +95,7 @@ namespace GrabbingToSql
             }
 
             // First part
-            return sb;
+            return dicDB;
         }
        
         public HtmlDocument GetHtmlByCompany( string company = "10581927")
