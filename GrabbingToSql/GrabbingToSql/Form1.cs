@@ -16,5 +16,12 @@ namespace GrabbingToSql
         {
             InitializeComponent();
         }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            Parser parser = new Parser();
+
+            richTextBox1.Text = parser.GetHtmlFromCompany().ToString();
+        }
     }
 }
