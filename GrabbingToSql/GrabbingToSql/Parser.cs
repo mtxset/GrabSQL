@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Text;
-using System.Threading.Tasks;
-
+using HtmlAgilityPack;
 
 namespace GrabbingToSql
 {
@@ -17,9 +14,12 @@ namespace GrabbingToSql
 
             HTTPConnector webConn = new HTTPConnector("https://beta.companieshouse.gov.uk/company/10581927");
 
-            sb = webConn.GetLastPage;
+            sb = webConn.GetLastPageSB;
 
-   
+            HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
+
+            doc.OptionFixNestedTags = true;
+            
             return sb;
         }
 
@@ -29,13 +29,16 @@ namespace GrabbingToSql
             private HttpWebResponse httpRespone;
 
             private StringBuilder lastPageContent;
+            private Stream        lastPageContetnStream;
 
-            public StringBuilder GetLastPage
+            public Stream GetLastPageStream
             {
-                get
-                {
-                    return lastPageContent;
-                }
+                get { return lastPageContetnStream; }
+            }
+
+            public StringBuilder GetLastPageSB
+            {
+                get { return lastPageContent; }
             }
 
             private void Init()
