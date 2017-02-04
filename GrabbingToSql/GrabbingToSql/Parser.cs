@@ -3,90 +3,87 @@ using System.IO;
 using System.Net;
 using System.Text;
 using HtmlAgilityPack;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace GrabbingToSql
 {
     class Parser
     {
-        public StringBuilder GetHtmlFromCompany()
+        private HtmlDocument htmlDoc;
+        private HtmlWeb webClient;
+        private String initialSite;
+
+        private Dictionary<string, string> dicDB;
+        private List<string> htmlFields;
+
+        private void Init()
+        {
+            htmlDoc = new HtmlDocument();
+            webClient = new HtmlWeb();
+            initialSite = "https://beta.companieshouse.gov.uk/";
+            dicDB = new Dictionary<string, string>();
+            htmlFields = new List<string>();
+            fillHtmlFields();
+        }
+
+        private void fillHtmlFields()
+        {
+            //TODO load from list
+            htmlFields.Add("Registered office address");
+            htmlFields.Add("Company status");
+            htmlFields.Add("Company type");
+            htmlFields.Add("Incorporated on");
+        }
+
+        public Parser()
+        {
+            Init();
+        }
+
+        public StringBuilder ParseHTMLCompaniesHouse(HtmlDocument data)
         {
             StringBuilder sb = new StringBuilder();
 
-            HTTPConnector webConn = new HTTPConnector("https://beta.companieshouse.gov.uk/company/10581927");
+            HtmlNodeCollection tempNodes = data.DocumentNode.SelectNodes("//dl");
 
-            sb = webConn.GetLastPageSB;
-
-            HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
-
-            doc.OptionFixNestedTags = true;
-            
-            return sb;
-        }
-
-        private class HTTPConnector
-        {
-            private HttpWebRequest  httpRequest;
-            private HttpWebResponse httpRespone;
-
-            private StringBuilder lastPageContent;
-            private Stream        lastPageContetnStream;
-
-            public Stream GetLastPageStream
+            foreach (HtmlNode item in tempNodes)
             {
-                get { return lastPageContetnStream; }
+                sb.Append(item.InnerText).AppendLine();
             }
 
-            public StringBuilder GetLastPageSB
+            // removing unnecessary spaces
+            string ts = Regex.Replace(sb.ToString(), @"^\s+$[\r\n]*", "", RegexOptions.Multiline);
+            string[] strData = ts.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
+
+            for (int i = 0; i < strData.Length; i++)
             {
-                get { return lastPageContent; }
+                strData[i] = strData[i].Trim();
             }
+            // removing unnecessary spaces
 
-            private void Init()
+            for (int i = 0; i < strData.Length; i++)
             {
-                lastPageContent = new StringBuilder();
-            }
-
-            public HTTPConnector( string initialRequest = "https://beta.companieshouse.gov.uk/company/")
-            {
-                Init();
-
-                try
-                { 
-                    httpRequest = (HttpWebRequest)WebRequest.Create( initialRequest );
-                    httpRequest.KeepAlive = false;
-                    httpRespone = (HttpWebResponse)httpRequest.GetResponse();
-                    
-                    Stream streamResponse       = httpRespone.GetResponseStream();
-                    StreamReader streamReader   = new StreamReader( streamResponse );
-
-                    Char[] buffer = new char[256];
-
-                    int count = streamReader.Read( buffer, 0, 256 );
-                    while (count > 0)
+                for (int v = 0; v < htmlFields.Count; v++)
+                {
+                    if ( strData[i].Contains( htmlFields[v] ) )
                     {
-                        String tempData = new string( buffer, 0, count );
-                        lastPageContent.Append( tempData );
-                        count = streamReader.Read( buffer, 0, 256 );
+                        dicDB.Add( htmlFields[v], strData[i+1] );
                     }
                 }
-                catch (ArgumentException e)
-                {
-
-                }
-                catch (WebException e)
-                {
-
-                }
-                catch (Exception e)
-                {
-
-                }
             }
 
-            
-            
+            // First part
+            return sb;
         }
+       
+        public HtmlDocument GetHtmlByCompany( string company = "10581927")
+        {
+            String url = String.Format( "{0}company/{1}", initialSite, company );
 
+            htmlDoc = webClient.Load( url );
 
+            return htmlDoc;
+        }
     }
 }
