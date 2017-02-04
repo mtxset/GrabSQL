@@ -1,0 +1,53 @@
+Details
+
+COMPANIES HOUSE
+GRABBER
+
+STEP 1
+
+I have a lot of e-mails, papers, data – TEXT – where I have company name and company numbers.   If I would like check deadlines or changes in company , I must mark company name, click Cltr+C and than Cltr+V to Companies House here:
+
+https://beta.companieshouse.gov.uk/
+
+
+Some example data:
+
+JON OYS LTD	10581927	Accepted	View
+907700	18/01/2017	AE KALINSCY LTD	10571534	Accepted	View
+896447	22/12/2016	RAMATT LTD	10537975	Accepted	View
+889821	09/12/2016	UK BUSINESS GATE LIMITED	10518175	TE	Accepted	View
+889141	08/12/2016	PRO COMMERCE&CODING LTD	10516102	DAF	Accepted	View
+889301	08/12/2016	OPENWINGS LTD	10516704	Accepted	View
+FLAXTON LTD	10491886	Accepted	View
+K1 VENTURE CAPITAL LTD	10455756	Accepted	View
+GLOBALSOFT ORIGIN LTD
+SORRISO TRADING LTD
+
+STEP 2
+Try to build robot,  that can exctract company names from text and generate final data from Companies House in SQL , and viewing on the screen as tables:
+
+Company Data Example:
+Company name
+Company number
+Date of incorporation
+Accounts Due:  First accounts made up to 31 December 2017 due by 8 September 2018
+Confirmation Statement Due:     21 December 2017
+Current Directors Listing
+Nature of business (SIC)
+Other details ( after I click on the OTHER button ) 
+
+Details form Filling History:
+https://beta.companieshouse.gov.uk/company/10516704/filing-history
+
+
+STEP 3
+Data ENTRY methods
+
+1/ TEXTAREA – COPY AND PASTE DIRECTLY FROM MAILS, HTML 
+(IMPORTANT FOR ME)
+
+2/ UPLOAD .DOC .PDF. .HTML AND OTHER POPULAR FORMATS
+(OPTION)
+
+3/ PASTE URL LINK
+(OPTION)
