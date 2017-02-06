@@ -337,9 +337,10 @@ namespace GrabbingToSql
 
             int maxPage = arr.Max();
 
-            //url = string.Format("{0}company/{1}/filing-history?page={2}", initialSite, company);
+            // check maxPage
+            //string url = string.Format("{0}company/{1}/filing-history?page={2}", initialSite, company);
 
-            htmlDoc = webClient.Load(url);
+            //htmlDoc = webClient.Load(url);
 
             List<List<string>> table = data.DocumentNode.SelectSingleNode("//table[@id='fhTable']")
                .Descendants("tr")
