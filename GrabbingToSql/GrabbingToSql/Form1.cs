@@ -17,7 +17,7 @@ namespace GrabbingToSql
         {
             List<Dictionary<string, string>> peopleDic = new List<Dictionary<string, string>>();
             Parser parser = new Parser();
-            var tab = Parser.PageTab.FilingHistory;
+            var tab = Parser.PageTab.People;
 
             DataTable table = parser.SetupTable(tab);
 
@@ -25,6 +25,7 @@ namespace GrabbingToSql
 
             //TODO: parse the text in list box
             //TODO: implement async row adding
+            
             foreach (string s in companies)
             {
                 if (s.Length != 0)
@@ -47,6 +48,8 @@ namespace GrabbingToSql
              */
 
             dataGridView1.DataSource = table;
+
+            DataSet newSet = parser.ParseAllHTML();
         }
 
         private void button2_Click(object sender, EventArgs e)
