@@ -15,39 +15,8 @@ namespace GrabbingToSql
 
         private void button1_Click(object sender, EventArgs e)
         {
-            List<Dictionary<string, string>> peopleDic = new List<Dictionary<string, string>>();
+
             Parser parser = new Parser();
-            var tab = Parser.PageTab.People;
-
-            DataTable table = parser.SetupTable(tab);
-
-            var companies = richTextBox1.Lines;
-
-            //TODO: parse the text in list box
-            //TODO: implement async row adding
-            
-            foreach (string s in companies)
-            {
-                if (s.Length != 0)
-                {
-                    parser.ParseHTML(out peopleDic, s, tab);
-                }
-
-                foreach (Dictionary<string, string> item in peopleDic)
-                {
-                    if (item != null)
-                        parser.AddNewRow(item, ref table);
-                }
-            }
-            /*
-            foreach (string s in companies)
-            {
-                if (s.Length != 0)
-                    parser.AddNewRow(parser.ParseHTML(out peopleDic, s, tab), ref table);
-            }
-             */
-
-            dataGridView1.DataSource = table;
 
             DataSet newSet = parser.ParseAllHTML();
         }

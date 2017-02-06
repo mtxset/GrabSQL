@@ -221,7 +221,8 @@ namespace GrabbingToSql
             DataTable OverviewTable = parser.SetupTable(tab);
             parser.AddNewRow(parser.ParseHTML(out tempDic, companyNumber, tab), ref OverviewTable);
             ds.Tables.Add(OverviewTable);
-            /*
+                
+            
             // Filing History
             tab = Parser.PageTab.FilingHistory;
             DataTable FilingHistoryTable = parser.SetupTable(tab);
@@ -232,7 +233,8 @@ namespace GrabbingToSql
                     parser.AddNewRow(item, ref FilingHistoryTable);
             }
             ds.Tables.Add(FilingHistoryTable);
-
+            tempDic.Clear();
+            
             //People
             tab = Parser.PageTab.People;
             DataTable PeopleTable = parser.SetupTable(tab);
@@ -240,10 +242,10 @@ namespace GrabbingToSql
             foreach (Dictionary<string, string> item in tempDic)
             {
                 if (item != null)
-                    parser.AddNewRow(item, ref FilingHistoryTable);
+                    parser.AddNewRow(item, ref PeopleTable);
             }
-            ds.Tables.Add(FilingHistoryTable);
-            */
+            ds.Tables.Add(PeopleTable);
+            
             return ds;
         }
 
