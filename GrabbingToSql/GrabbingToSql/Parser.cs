@@ -209,6 +209,44 @@ namespace GrabbingToSql
             Init();
         }
 
+        public DataSet ParseAllHTML(string companyNumber =  "00889821")
+        {
+            DataSet ds = new DataSet();
+
+            List<Dictionary<string, string>> tempDic = new List<Dictionary<string, string>>();
+            Parser parser = new Parser();
+
+            //Overview
+            var tab = Parser.PageTab.Overview;
+            DataTable OverviewTable = parser.SetupTable(tab);
+            parser.AddNewRow(parser.ParseHTML(out tempDic, companyNumber, tab), ref OverviewTable);
+            ds.Tables.Add(OverviewTable);
+            /*
+            // Filing History
+            tab = Parser.PageTab.FilingHistory;
+            DataTable FilingHistoryTable = parser.SetupTable(tab);
+            parser.ParseHTML(out tempDic, companyNumber, tab);
+            foreach (Dictionary<string, string> item in tempDic)
+            {
+                if (item != null)
+                    parser.AddNewRow(item, ref FilingHistoryTable);
+            }
+            ds.Tables.Add(FilingHistoryTable);
+
+            //People
+            tab = Parser.PageTab.People;
+            DataTable PeopleTable = parser.SetupTable(tab);
+            parser.ParseHTML(out tempDic, companyNumber, tab);
+            foreach (Dictionary<string, string> item in tempDic)
+            {
+                if (item != null)
+                    parser.AddNewRow(item, ref FilingHistoryTable);
+            }
+            ds.Tables.Add(FilingHistoryTable);
+            */
+            return ds;
+        }
+
         public Dictionary<string, string> ParseHTML(out List<Dictionary<string, string>> customDic, string companyNumber = "10581927", PageTab tab = PageTab.Overview)
         {
             List<Dictionary<string, string>> tempDic = new List<Dictionary<string, string>>();
@@ -221,13 +259,12 @@ namespace GrabbingToSql
                     return ParseHTMLOverviewTab(data);
 
                 case PageTab.FilingHistory:
-                    customDic = ParseHTMLFilingHistoryTab(data);
+                    customDic = ParseHTMLFilingHistoryTab(data, companyNumber);
                     break;
 
                 case PageTab.People:
                     customDic = ParseHTMLPeopleTab(data);
                     break;
-
                 default:
                     return ParseHTMLOverviewTab(data);
             }
@@ -315,50 +352,56 @@ namespace GrabbingToSql
         }
 
         
-        private List<Dictionary<string, string>> ParseHTMLFilingHistoryTab(HtmlDocument data)
+        private List<Dictionary<string, string>> ParseHTMLFilingHistoryTab(HtmlDocument data, string companyNumber)
         {
             List<Dictionary<string, string>> tempDic = new List<Dictionary<string, string>>();
             StringBuilder sb = new StringBuilder();
+            string[] strData;
+            int maxPage = 1;
 
+            // Getting max page
             var node = data.DocumentNode.SelectNodes("//ul[@class='pager']");
+            if (node != null)
+            { 
+                sb = NodeCollectionToSB(node);
+                strData = ReplaceSplitTrim(sb);
 
-            sb = NodeCollectionToSB(node);
+                int r;
+                List<int> arr = new List<int>();
 
-            string[] strData = ReplaceSplitTrim(sb);
-
-            int r;
-            List<int> arr = new List<int>();
-
-            for (int i = 0; i < strData.Length; i++)
-            {
-                if (int.TryParse(strData[i], out r))
-                    arr.Add(r);
+                for (int i = 0; i < strData.Length; i++)
+                {
+                    if (int.TryParse(strData[i], out r))
+                        arr.Add(r);
+                }
+                maxPage = arr.Max();
             }
+            // End Getting max page 101
 
-            int maxPage = arr.Max();
-
-            //url = string.Format("{0}company/{1}/filing-history?page={2}", initialSite, company);
-
-            htmlDoc = webClient.Load(url);
-
-            List<List<string>> table = data.DocumentNode.SelectSingleNode("//table[@id='fhTable']")
-               .Descendants("tr")
-               .Skip(1)
-               .Where(tr => tr.Elements("td").Count() > 1)
-               .Select(tr => tr.Elements("td").Select(td => td.InnerText.Trim()).ToList())
-               .ToList();
-
-            Dictionary<string, string> tDic;
-            for (int i = 0; i < table.Count; i++)
+            for (int p = 1; p <= maxPage; p++)
             {
-                tDic = EmptyDictionary(PageTab.FilingHistory);
+                string url = string.Format("{0}company/{1}/filing-history?page={2}", initialSite, companyNumber, p);
+                data = webClient.Load(url);
 
-                //TODO: 101
-                tDic["Date"] = table[i][0];
-                tDic["Type"] = table[i][1];
-                tDic["Description"] = table[i][2];
-                tDic["View / Download"] = table[i][3];
-                tempDic.Add(tDic);
+                List<List<string>> table = data.DocumentNode.SelectSingleNode("//table[@id='fhTable']")
+                .Descendants("tr")
+                .Skip(1)
+                .Where(tr => tr.Elements("td").Count() > 1)
+                .Select(tr => tr.Elements("td").Select(td => td.InnerText.Trim()).ToList())
+                .ToList();
+
+                Dictionary<string, string> tDic;
+                for (int i = 0; i < table.Count; i++)
+                {
+                    tDic = EmptyDictionary(PageTab.FilingHistory);
+
+                        //TODO: 101
+                        tDic["Date"] = table[i][0];
+                        tDic["Type"] = table[i][1];
+                        tDic["Description"] = table[i][2];
+                        tDic["View / Download"] = table[i][3];
+                        tempDic.Add(tDic);
+                }
             }
 
             return tempDic;
