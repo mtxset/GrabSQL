@@ -13,18 +13,21 @@ namespace GrabbingToSql
         {
             Parser.ConfigLoader cLoader = new Parser.ConfigLoader();
             Dictionary<string, string> tDic = cLoader.LoadFields(Parser.PageTab.Overview);
-            var temp = tDic.Values.ToArray();
+            string[] FiNamesOverView = tDic.Values.ToArray();
 
-            InitializeDB(userid, password, Server, Database);
+            InitializeDB(userid, password, Server, Database, FiNamesOverView);
         }
 
-        private bool InitializeDB(string userid, string password, string Server, string Database)
+        private bool InitializeDB(string userid, string password, string Server, string Database, string[] FiNamesOverView)
         {
             string QueryCreateDatabase = $"CREATE DATABASE IF NOT EXISTS {Database}";
             string QueryCreateTable1 = @"CREATE TABLE IF NOT EXISTS OverView (
-                id INT NOT NULL, 
-                RegisteredOfficeAddress VARCHAR(255),
-                PRIMARY KEY (id))";
+                id INT NOT NULL,";
+                foreach (string FiName in FiNamesOverView)
+                {
+                    QueryCreateTable1 += $"{FiName} VARCHAR(255),";
+                }
+                QueryCreateTable1 += "PRIMARY KEY (id))";
             try
             {
                 MySqlConnectionStringBuilder builder =
