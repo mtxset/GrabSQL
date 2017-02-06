@@ -37,8 +37,8 @@ namespace GrabbingToSql
                     case PageTab.Overview:
                         prefixName = "Overview";
                         break;
-                    case PageTab.FillingHistory:
-                        prefixName = "FillingHistory";
+                    case PageTab.FilingHistory:
+                        prefixName = "FilingHistory";
                         break;
                     case PageTab.People:
                         prefixName = "People";
@@ -70,7 +70,7 @@ namespace GrabbingToSql
         public enum PageTab
         {
             Overview = 0,
-            FillingHistory = 1,
+            FilingHistory = 1,
             People = 2
         }
 
@@ -80,8 +80,8 @@ namespace GrabbingToSql
             {
                 case PageTab.Overview:
                     return "Overview";
-                case PageTab.FillingHistory:
-                    return "FillingHistory";
+                case PageTab.FilingHistory:
+                    return "FilingHistory";
                 case PageTab.People:
                     return "People";
                 default:
@@ -127,6 +127,18 @@ namespace GrabbingToSql
             return strData;
         }
 
+        private StringBuilder NodeCollectionToSBInnerHtml(HtmlNodeCollection tempNodes)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            foreach (HtmlNode item in tempNodes)
+            {
+                sb.Append(item.InnerHtml).AppendLine();
+            }
+
+            return sb;
+        }
+
         private StringBuilder NodeCollectionToSB( HtmlNodeCollection tempNodes)
         {
             StringBuilder sb = new StringBuilder();
@@ -160,10 +172,11 @@ namespace GrabbingToSql
             initialSite = "https://beta.companieshouse.gov.uk/";
 
             htmlFields = new Dictionary<string, List<string>>();
+
             //TODO: add to array (implement log stuff)
             htmlFields.Add("Overview", new List<string>());
             htmlFields.Add("People", new List<string>());
-            htmlFields.Add("FillingHistory", new List<string>());
+            htmlFields.Add("FilingHistory", new List<string>());
 
             fillHtmlFields();
         }
@@ -173,7 +186,7 @@ namespace GrabbingToSql
             ConfigLoader cLoader = new ConfigLoader();
             Dictionary<string, string> tDicO = cLoader.LoadFields(PageTab.Overview);
             Dictionary<string, string> tDicP = cLoader.LoadFields(PageTab.People);
-            Dictionary<string, string> tDicF = cLoader.LoadFields(PageTab.FillingHistory);
+            Dictionary<string, string> tDicF = cLoader.LoadFields(PageTab.FilingHistory);
 
             for (int i = 0; i < tDicO.Count; i++)
             {
@@ -187,7 +200,7 @@ namespace GrabbingToSql
 
             for (int i = 0; i < tDicF.Count; i++)
             {
-                htmlFields["FillingHistory"].Add(tDicF.Keys.ElementAt(i));
+                htmlFields["FilingHistory"].Add(tDicF.Keys.ElementAt(i));
             }
         }
 
@@ -196,10 +209,10 @@ namespace GrabbingToSql
             Init();
         }
 
-        public Dictionary<string, string> ParseHTML(out List<Dictionary<string, string>> poepleDic, string companyNumber = "10581927", PageTab tab = PageTab.Overview)
+        public Dictionary<string, string> ParseHTML(out List<Dictionary<string, string>> customDic, string companyNumber = "10581927", PageTab tab = PageTab.Overview)
         {
             List<Dictionary<string, string>> tempDic = new List<Dictionary<string, string>>();
-            poepleDic = tempDic;
+            customDic = tempDic;
             HtmlDocument data = GetHtmlByCompany(companyNumber, tab);
 
             switch (tab)
@@ -207,16 +220,19 @@ namespace GrabbingToSql
                 case PageTab.Overview:
                     return ParseHTMLOverviewTab(data);
 
-                case PageTab.FillingHistory:
-                    return ParseHTMLFillingHistoryTab(data);
+                case PageTab.FilingHistory:
+                    customDic = ParseHTMLFilingHistoryTab(data);
+                    break;
 
                 case PageTab.People:
-                    poepleDic = ParseHTMLPeopleTab(data);
-                    return null;
+                    customDic = ParseHTMLPeopleTab(data);
+                    break;
 
                 default:
                     return ParseHTMLOverviewTab(data);
             }
+
+            return null;
         }
 
         private List<Dictionary<string, string>> ParseHTMLPeopleTab(HtmlDocument data)
@@ -298,9 +314,54 @@ namespace GrabbingToSql
             return tempDic;
         }
 
-        private Dictionary<string, string> ParseHTMLFillingHistoryTab(HtmlDocument data)
+        
+        private List<Dictionary<string, string>> ParseHTMLFilingHistoryTab(HtmlDocument data)
         {
-            throw new NotImplementedException();
+            List<Dictionary<string, string>> tempDic = new List<Dictionary<string, string>>();
+            StringBuilder sb = new StringBuilder();
+
+            var node = data.DocumentNode.SelectNodes("//ul[@class='pager']");
+
+            sb = NodeCollectionToSB(node);
+
+            string[] strData = ReplaceSplitTrim(sb);
+
+            int r;
+            List<int> arr = new List<int>();
+
+            for (int i = 0; i < strData.Length; i++)
+            {
+                if (int.TryParse(strData[i], out r))
+                    arr.Add(r);
+            }
+
+            int maxPage = arr.Max();
+
+            //url = string.Format("{0}company/{1}/filing-history?page={2}", initialSite, company);
+
+            htmlDoc = webClient.Load(url);
+
+            List<List<string>> table = data.DocumentNode.SelectSingleNode("//table[@id='fhTable']")
+               .Descendants("tr")
+               .Skip(1)
+               .Where(tr => tr.Elements("td").Count() > 1)
+               .Select(tr => tr.Elements("td").Select(td => td.InnerText.Trim()).ToList())
+               .ToList();
+
+            Dictionary<string, string> tDic;
+            for (int i = 0; i < table.Count; i++)
+            {
+                tDic = EmptyDictionary(PageTab.FilingHistory);
+
+                //TODO: 101
+                tDic["Date"] = table[i][0];
+                tDic["Type"] = table[i][1];
+                tDic["Description"] = table[i][2];
+                tDic["View / Download"] = table[i][3];
+                tempDic.Add(tDic);
+            }
+
+            return tempDic;
         }
 
         private Dictionary<string, string> ParseHTMLOverviewTab(HtmlDocument data)
@@ -353,7 +414,15 @@ namespace GrabbingToSql
 
                     htmlDoc = webClient.Load(url);
 
-                    return htmlDoc;          
+                    return htmlDoc;
+
+                case PageTab.FilingHistory:
+
+                    url = string.Format("{0}company/{1}/filing-history", initialSite, company);
+
+                    htmlDoc = webClient.Load(url);
+
+                    return htmlDoc;
                 default:
                     return null;// TODO raise exception
             }

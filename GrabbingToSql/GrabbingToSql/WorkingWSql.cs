@@ -18,7 +18,7 @@ namespace GrabbingToSql
             Dictionary<string, string> tDicPeople = cLoader.LoadFields(Parser.PageTab.People);
             string[] FiNamesPeople = tDicPeople.Values.ToArray();
 
-            Dictionary<string, string> tDicFillingHistory = cLoader.LoadFields(Parser.PageTab.FillingHistory);
+            Dictionary<string, string> tDicFillingHistory = cLoader.LoadFields(Parser.PageTab.FilingHistory);
             string[] FiNamesFillingHistory = tDicFillingHistory.Values.ToArray();
 
             InitializeDB(userid, password, Server, Database);

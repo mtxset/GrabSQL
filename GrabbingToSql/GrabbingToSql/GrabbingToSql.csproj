@@ -95,6 +95,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="fillingSample.html" />
     <Content Include="PeopleSample.html" />
     <Content Include="Sample.html" />
     <Content Include="task.txt" />

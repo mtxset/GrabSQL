@@ -17,7 +17,7 @@ namespace GrabbingToSql
         {
             List<Dictionary<string, string>> peopleDic = new List<Dictionary<string, string>>();
             Parser parser = new Parser();
-            var tab = Parser.PageTab.People;
+            var tab = Parser.PageTab.FilingHistory;
 
             DataTable table = parser.SetupTable(tab);
 
