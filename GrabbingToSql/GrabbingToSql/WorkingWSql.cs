@@ -24,11 +24,14 @@ namespace GrabbingToSql
 
             if (InitializeDB(userid, password, Server, Database))
                 if (InitializeTables(FiNamesOverView, "OverView"))
-                    if (!(InitializeTables(FiNamesPeople, "People")))
-                    return;
+                    if (InitializeTables(FiNamesPeople, "People"))
+                        if (!InitializeTables(FiNamesFillingHistory, "FillingHistory"))
+                            return;
+                        else;
+                    else return;
                 else return;
             else return;
-            //InitializeTables(FiNamesFillingHistory, "FillingHistory");
+            
         }
 
         public bool UpdateTable(ref DataSet DataSetToUpdate)
