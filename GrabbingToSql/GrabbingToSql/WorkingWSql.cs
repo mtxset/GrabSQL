@@ -1,5 +1,6 @@
 ﻿using MySql.Data.MySqlClient;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace GrabbingToSql
@@ -12,6 +13,7 @@ namespace GrabbingToSql
         {
             Parser.ConfigLoader cLoader = new Parser.ConfigLoader();
             Dictionary<string, string> tDic = cLoader.LoadFields(Parser.PageTab.Overview);
+            var temp = tDic.Values.ToArray();
 
             InitializeDB(userid, password, Server, Database);
         }
