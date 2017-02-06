@@ -16,7 +16,7 @@ namespace GrabbingToSql
         private void button1_Click(object sender, EventArgs e)
         {
             Parser parser = new Parser();
-            var tab = Parser.PageTab.Overview;
+            var tab = Parser.PageTab.People;
 
             DataTable table = parser.SetupTable(tab);
 
