@@ -182,7 +182,6 @@ namespace GrabbingToSql
             {
                 htmlFields["FillingHistory"].Add(tDicF.Keys.ElementAt(i));
             }
-
         }
 
         public Parser()
@@ -216,13 +215,19 @@ namespace GrabbingToSql
             string tabName = ReturnPageTab(PageTab.People);
 
             //< div class="appointments-list">
-            string xcode = "//*[@class=\"appointments-list\"]";
+            string xcode = "//div[contains(@class, 'appointment-')";
             HtmlNodeCollection tempNodes = data.DocumentNode.SelectNodes(xcode);
+
+            if (tempNodes == null)
+            {
+                throw new Exception("TempNode was empty. Check xcode in ParseHTMLPeopleTab()");
+            }
 
             sb = NodeCollectionToSB(tempNodes);
 
             string[] strData = ReplaceSplitTrim(sb);
 
+           
             for (int i = 0; i < strData.Length; i++)
             {
                 for (int v = 0; v < htmlFields[ tabName ].Count; v++)
@@ -285,6 +290,7 @@ namespace GrabbingToSql
                    htmlDoc = webClient.Load(url);
 
                    return htmlDoc;
+
                 case PageTab.People:
 
                     url = string.Format("{0}company/{1}/officers", initialSite, company);
