@@ -16,8 +16,9 @@ namespace GrabbingToSql
         private void button1_Click(object sender, EventArgs e)
         {
             Parser parser = new Parser();
-            
-            DataTable table = parser.SetupTable(Parser.PageTab.People);
+            var tab = Parser.PageTab.Overview;
+
+            DataTable table = parser.SetupTable(tab);
 
             var companies = richTextBox1.Lines;
 
@@ -26,7 +27,7 @@ namespace GrabbingToSql
             foreach (string s in companies)
             {
                 if (s.Length != 0)
-                parser.AddNewRow(parser.ParseHTML(s,Parser.PageTab.People), ref table);
+                parser.AddNewRow(parser.ParseHTML(s, tab), ref table);
             }
 
             dataGridView1.DataSource = table;

@@ -1,4 +1,5 @@
 ﻿using MySql.Data.MySqlClient;
+using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace GrabbingToSql
@@ -9,6 +10,9 @@ namespace GrabbingToSql
         private MySqlConnection Connection;
         public WorkingWSql(string userid, string password, string Server, string Database)
         {
+            Parser.ConfigLoader cLoader = new Parser.ConfigLoader();
+            Dictionary<string, string> tDic = cLoader.LoadFields(Parser.PageTab.Overview);
+
             InitializeDB(userid, password, Server, Database);
         }
 

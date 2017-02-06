@@ -1,16 +1,21 @@
 ﻿using System;
-using System.IO;
-using System.Net;
 using System.Text;
 using HtmlAgilityPack;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
 using System.Linq;
 
 namespace GrabbingToSql
 {
+    public static class Global
+    {
+        public static Dictionary<string, Dictionary<string, string>> fieldDictionaries = new Dictionary<string, Dictionary<string, string>>()
+        {
+
+        };
+    }
+
     class Parser
     {
         private HtmlDocument htmlDoc;
@@ -18,6 +23,8 @@ namespace GrabbingToSql
         private String initialSite;
 
         // TODO: load list and fill ALL lists from config, pageTAB, initialSite, formats for pageTabs
+        private Dictionary<string, List<string>> htmlFields;
+
         private List<string> htmlOverviewFields;
         private List<string> htmlPoepleFields;
         private List<string> htmlFillingHistoryFields;
@@ -75,9 +82,16 @@ namespace GrabbingToSql
             dataT.Rows.Add( dicDB.Values.ToArray() );
         }
 
-        private Dictionary<string, string> EmptyDictionary()
+        private Dictionary<string, string> EmptyDictionary(PageTab tab)
         {
             Dictionary<string, string> tDic = new Dictionary<string, string>();
+
+            switch (tab)
+            {
+                case
+            }
+
+            
 
             for (int i = 0; i < htmlOverviewFields.Count; i++)
             {
@@ -199,10 +213,13 @@ namespace GrabbingToSql
             {
                 case PageTab.Overview:
                     return ParseHTMLOverviewTab(data);
+
                 case PageTab.FillingHistory:
                     return ParseHTMLFillingHistoryTab(data);
+
                 case PageTab.People:
                     return ParseHTMLPeopleTab(data);
+
                 default:
                     return ParseHTMLOverviewTab(data);
             }
@@ -220,6 +237,17 @@ namespace GrabbingToSql
             sb = NodeCollectionToSB(tempNodes);
 
             string[] strData = ReplaceSplitTrim(sb);
+
+            for (int i = 0; i < strData.Length; i++)
+            {
+                for (int v = 0; v < htmlOverviewFields.Count; v++)
+                {
+                    if (strData[i].Contains(htmlOverviewFields[v]))
+                    {
+                        dicDB[htmlPoepleFields[v]] = strData[i + 1];
+                    }
+                }
+            }
 
             return dicDB;
         }
