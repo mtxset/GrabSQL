@@ -25,10 +25,6 @@ namespace GrabbingToSql
         // TODO: load list and fill ALL lists from config, pageTAB, initialSite, formats for pageTabs
         private Dictionary<string, List<string>> htmlFields;
 
-        private List<string> htmlOverviewFields;
-        private List<string> htmlPoepleFields;
-        private List<string> htmlFillingHistoryFields;
-
         public class ConfigLoader
         {
             public Dictionary<string, string> LoadFields(PageTab tab = PageTab.Overview)
@@ -41,7 +37,7 @@ namespace GrabbingToSql
                         prefixName = "Overview";
                         break;
                     case PageTab.FillingHistory:
-                        prefixName = "Filling";
+                        prefixName = "FillingHistory";
                         break;
                     case PageTab.People:
                         prefixName = "People";
@@ -77,6 +73,21 @@ namespace GrabbingToSql
             People = 2
         }
 
+        private string ReturnPageTab(PageTab tab)
+        {
+            switch(tab)
+            {
+                case PageTab.Overview:
+                    return "Overview";
+                case PageTab.FillingHistory:
+                    return "FillingHistory";
+                case PageTab.People:
+                    return "People";
+                default:
+                    goto case PageTab.Overview;
+            }
+        }
+
         public void AddNewRow(Dictionary<string, string> dicDB, ref DataTable dataT)
         {
             dataT.Rows.Add( dicDB.Values.ToArray() );
@@ -85,17 +96,11 @@ namespace GrabbingToSql
         private Dictionary<string, string> EmptyDictionary(PageTab tab)
         {
             Dictionary<string, string> tDic = new Dictionary<string, string>();
+            string tabName = ReturnPageTab(tab);
 
-            switch (tab)
+            for (int i = 0; i < htmlFields[ tabName ].Count; i++)
             {
-                case
-            }
-
-            
-
-            for (int i = 0; i < htmlOverviewFields.Count; i++)
-            {
-                tDic.Add(htmlOverviewFields[i], "");
+                tDic.Add( htmlFields[ tabName][i], "" );
             }
             return tDic;
         }
@@ -127,46 +132,19 @@ namespace GrabbingToSql
 
         public DataTable SetupTable( PageTab tab = PageTab.Overview )
         {
-            switch (tab)
-            {
-                case PageTab.Overview:
-                    return SetupOverviewTable();
-                case PageTab.FillingHistory:
-                    return SetupFillingHistoryTable();
-                case PageTab.People:
-                    return SetupPeopleTable();
-                default:
-                    return SetupOverviewTable();
-            }
-        }
+            string tabName = ReturnPageTab(tab);
 
-        private DataTable SetupPeopleTable()
-        {
-            DataTable tb1 = new DataTable("People");
-            for (int i = 0; i < htmlPoepleFields.Count; i++)
+            DataTable tb1 = new DataTable(tabName);
+
+            for (int i = 0; i < htmlFields[tabName].Count; i++)
             {
-                tb1.Columns.Add(htmlPoepleFields[i]);
+                tb1.Columns.Add(htmlFields[tabName][i]);
             }
 
             return tb1;
         }
 
-        private DataTable SetupFillingHistoryTable()
-        {
-            throw new NotImplementedException();
-        }
 
-        private DataTable SetupOverviewTable()
-        {
-
-            DataTable tb1 = new DataTable("Overview");
-            for (int i = 0; i < htmlOverviewFields.Count; i++)
-            {
-                tb1.Columns.Add(htmlOverviewFields[i]);
-            }
-
-            return tb1;
-        }
 
         private void Init()
         {
@@ -174,10 +152,11 @@ namespace GrabbingToSql
             webClient = new HtmlWeb();
             initialSite = "https://beta.companieshouse.gov.uk/";
 
+            htmlFields = new Dictionary<string, List<string>>();
             //TODO: add to array (implement log stuff)
-            htmlOverviewFields = new List<string>();
-            htmlPoepleFields = new List<string>();
-            htmlFillingHistoryFields = new List<string>();
+            htmlFields.Add("Overview", new List<string>());
+            htmlFields.Add("People", new List<string>());
+            htmlFields.Add("FillingHistory", new List<string>());
 
             fillHtmlFields();
         }
@@ -185,18 +164,23 @@ namespace GrabbingToSql
         private void fillHtmlFields()
         {
             ConfigLoader cLoader = new ConfigLoader();
-            Dictionary<string, string> tDic = cLoader.LoadFields( PageTab.Overview );
+            Dictionary<string, string> tDicO = cLoader.LoadFields(PageTab.Overview);
+            Dictionary<string, string> tDicP = cLoader.LoadFields(PageTab.People);
+            Dictionary<string, string> tDicF = cLoader.LoadFields(PageTab.FillingHistory);
 
-            for (int i = 0; i < tDic.Count; i++)
+            for (int i = 0; i < tDicO.Count; i++)
             {
-                htmlOverviewFields.Add(tDic.Keys.ElementAt(i));
+                htmlFields["Overview"].Add(tDicO.Keys.ElementAt(i));
             }
 
-            tDic.Clear(); tDic = cLoader.LoadFields( PageTab.People );
-
-            for (int i = 0; i < tDic.Count; i++)
+            for (int i = 0; i < tDicP.Count; i++)
             {
-                htmlPoepleFields.Add(tDic.Keys.ElementAt(i));
+                htmlFields["People"].Add(tDicP.Keys.ElementAt(i));
+            }
+
+            for (int i = 0; i < tDicF.Count; i++)
+            {
+                htmlFields["FillingHistory"].Add(tDicF.Keys.ElementAt(i));
             }
 
         }
@@ -228,7 +212,8 @@ namespace GrabbingToSql
         private Dictionary<string, string> ParseHTMLPeopleTab(HtmlDocument data)
         {
             StringBuilder sb = new StringBuilder();
-            Dictionary<string, string> dicDB = EmptyDictionary();
+            Dictionary<string, string> dicDB = EmptyDictionary(PageTab.People);
+            string tabName = ReturnPageTab(PageTab.People);
 
             //< div class="appointments-list">
             string xcode = "//*[@class=\"appointments-list\"]";
@@ -240,11 +225,11 @@ namespace GrabbingToSql
 
             for (int i = 0; i < strData.Length; i++)
             {
-                for (int v = 0; v < htmlOverviewFields.Count; v++)
+                for (int v = 0; v < htmlFields[ tabName ].Count; v++)
                 {
-                    if (strData[i].Contains(htmlOverviewFields[v]))
+                    if ( strData[i].Contains( htmlFields[ tabName][v] ) )
                     {
-                        dicDB[htmlPoepleFields[v]] = strData[i + 1];
+                        dicDB[htmlFields[ tabName ][v]] = strData[i + 1];
                     }
                 }
             }
@@ -260,7 +245,8 @@ namespace GrabbingToSql
         private Dictionary<string, string> ParseHTMLOverviewTab(HtmlDocument data)
         {
             StringBuilder sb = new StringBuilder();
-            Dictionary<string, string> dicDB = EmptyDictionary();
+            Dictionary<string, string> dicDB = EmptyDictionary(PageTab.Overview);
+            string tabName = ReturnPageTab(PageTab.Overview);
 
             //TODO implement try
             //TODO implement reading xcode form config file
@@ -273,11 +259,11 @@ namespace GrabbingToSql
 
             for (int i = 0; i < strData.Length; i++)
             {
-                for (int v = 0; v < htmlOverviewFields.Count; v++)
+                for (int v = 0; v < htmlFields[ tabName ].Count; v++)
                 {
-                    if ( strData[i].Contains( htmlOverviewFields[v] ) )
+                    if ( strData[i].Contains( htmlFields[ tabName][v] ) )
                     {
-                        dicDB[htmlOverviewFields[v]] = strData[i + 1];
+                        dicDB[htmlFields[ tabName ][v]] = strData[i + 1];
                     }
                 }
             }
