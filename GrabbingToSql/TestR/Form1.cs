@@ -25,8 +25,8 @@ namespace TestR
             DataTable table = parser.SetupTable(tab);
 
             List<string> companies = new List<string>();
-            companies.Add("907700");
-            companies.Add("896447");
+            companies.Add("10571534");
+            companies.Add("10537975");
 
 
             //TODO: parse the text in list box
@@ -45,7 +45,9 @@ namespace TestR
                 }
             }
 
-
+            DataSet DataSetToUpdate = new DataSet();
+            DataSetToUpdate.Tables.Add(table);
+            SqlObj.UpdateTable(ref DataSetToUpdate);
         }
 
         private void Form1_Load(object sender, EventArgs e)
