@@ -17,7 +17,7 @@ namespace GrabbingToSql
         };
     }
 
-    class Parser
+    public class Parser
     {
         private HtmlDocument htmlDoc;
         private HtmlWeb webClient;

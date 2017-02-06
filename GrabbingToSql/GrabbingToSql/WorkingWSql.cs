@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using System.Data;
 
 namespace GrabbingToSql
 {
@@ -21,10 +22,19 @@ namespace GrabbingToSql
             Dictionary<string, string> tDicFillingHistory = cLoader.LoadFields(Parser.PageTab.FilingHistory);
             string[] FiNamesFillingHistory = tDicFillingHistory.Values.ToArray();
 
-            InitializeDB(userid, password, Server, Database);
-            InitializeTables(FiNamesOverView, "OverView");
-            InitializeTables(FiNamesPeople, "People");
+            if (InitializeDB(userid, password, Server, Database))
+                if (InitializeTables(FiNamesOverView, "OverView"))
+                    if (!(InitializeTables(FiNamesPeople, "People")))
+                    return;
+                else return;
+            else return;
             //InitializeTables(FiNamesFillingHistory, "FillingHistory");
+        }
+
+        public bool UpdateTable(ref DataSet DataSetToUpdate)
+        {
+            DataTable table1 = DataSetToUpdate.Tables[0];
+            return false;
         }
 
         private bool InitializeTables(string[] FiNames, string TableName)
