@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Diagnostics;
 
 namespace GrabbingToSql
 {
@@ -105,6 +106,14 @@ namespace GrabbingToSql
             return tDic;
         }
 
+        private string ReplaceTrim( string sb )
+        {
+            string ts = Regex.Replace(sb.ToString(), @"^\s+$[\r\n]*", "", RegexOptions.Multiline);
+            ts = ts.Trim();
+
+            return ts;
+        }
+
         private string[] ReplaceSplitTrim( StringBuilder sb)
         {
             string ts = Regex.Replace(sb.ToString(), @"^\s+$[\r\n]*", "", RegexOptions.Multiline);
@@ -143,8 +152,6 @@ namespace GrabbingToSql
 
             return tb1;
         }
-
-
 
         private void Init()
         {
@@ -189,9 +196,12 @@ namespace GrabbingToSql
             Init();
         }
 
-        public Dictionary<string, string> ParseHTML(string companyNumber = "10581927", PageTab tab = PageTab.Overview)
+        public Dictionary<string, string> ParseHTML(out List<Dictionary<string, string>> poepleDic, string companyNumber = "10581927", PageTab tab = PageTab.Overview)
         {
+            List<Dictionary<string, string>> tempDic = new List<Dictionary<string, string>>();
+            poepleDic = tempDic;
             HtmlDocument data = GetHtmlByCompany(companyNumber, tab);
+
             switch (tab)
             {
                 case PageTab.Overview:
@@ -201,45 +211,91 @@ namespace GrabbingToSql
                     return ParseHTMLFillingHistoryTab(data);
 
                 case PageTab.People:
-                    return ParseHTMLPeopleTab(data);
+                    poepleDic = ParseHTMLPeopleTab(data);
+                    return null;
 
                 default:
                     return ParseHTMLOverviewTab(data);
             }
         }
 
-        private Dictionary<string, string> ParseHTMLPeopleTab(HtmlDocument data)
+        private List<Dictionary<string, string>> ParseHTMLPeopleTab(HtmlDocument data)
         {
             StringBuilder sb = new StringBuilder();
-            Dictionary<string, string> dicDB = EmptyDictionary(PageTab.People);
+            List<Dictionary<string, string>> tempDic = new List<Dictionary<string, string>>();
+
             string tabName = ReturnPageTab(PageTab.People);
+            int officers = 0;
 
             //< div class="appointments-list">
-            string xcode = "//div[contains(@class, 'appointment-')";
+            string xcode = "//*[@id=\"company-appointments\"]";
             HtmlNodeCollection tempNodes = data.DocumentNode.SelectNodes(xcode);
 
             if (tempNodes == null)
             {
-                throw new Exception("TempNode was empty. Check xcode in ParseHTMLPeopleTab()");
+                throw new Exception("TempNode was empty. Check xcode in ParseHTMLPeopleTab(); xcode: " + xcode);
             }
 
             sb = NodeCollectionToSB(tempNodes);
 
             string[] strData = ReplaceSplitTrim(sb);
 
-           
             for (int i = 0; i < strData.Length; i++)
             {
-                for (int v = 0; v < htmlFields[ tabName ].Count; v++)
+                // TODO: so bad..
+                if ( strData[i].Contains("officers") )
                 {
-                    if ( strData[i].Contains( htmlFields[ tabName][v] ) )
-                    {
-                        dicDB[htmlFields[ tabName ][v]] = strData[i + 1];
-                    }
+                    officers = int.Parse(strData[i - 1]);
                 }
             }
 
-            return dicDB;
+            string xName = "";
+            HtmlNode tNode = null;
+            Dictionary<string, string> tDic;
+            //TODO: load ids format from log
+            for (int i = 1; i <= officers; i++)
+            {
+                tDic = EmptyDictionary(PageTab.People);
+
+                xName = String.Format("//span[@id=\"officer-name-{0}\"]", i.ToString() );
+                tNode = data.DocumentNode.SelectSingleNode(xName);
+                if (tNode != null) 
+                    tDic["Officer Name"] = ReplaceTrim(tNode.InnerText);
+
+                xName = String.Format("//*[@id=\"officer-address-value-{0}\"]", i.ToString());
+                tNode = data.DocumentNode.SelectSingleNode(xName);
+                if (tNode != null)
+                    tDic["Correspondence address"] = ReplaceTrim(tNode.InnerText);
+
+                xName = String.Format("//*[@id=\"officer-role-{0}\"]", i.ToString());
+                tNode = data.DocumentNode.SelectSingleNode(xName);
+                if (tNode != null)
+                    tDic["Role"] = ReplaceTrim(tNode.InnerText);
+
+                xName = String.Format("//*[@id=\"officer-date-of-birth-{0}\"]", i.ToString());
+                tNode = data.DocumentNode.SelectSingleNode(xName);
+                if (tNode != null)
+                    tDic["Date of Birth"] = ReplaceTrim(tNode.InnerText);
+
+                xName = String.Format("//*[@id=\"officer-nationality-{0}\"]", i.ToString());
+                tNode = data.DocumentNode.SelectSingleNode(xName);
+                if (tNode != null)
+                    tDic["Nationality"] = ReplaceTrim(tNode.InnerText);
+
+                xName = String.Format("//*[@id=\"officer-country-of-residence-{0}\"]", i.ToString());
+                tNode = data.DocumentNode.SelectSingleNode(xName);
+                if (tNode != null)
+                    tDic["Country of residence"] = ReplaceTrim(tNode.InnerText);
+
+                xName = String.Format("//*[@id=\"officer-occupation-{0}\"]", i.ToString());
+                tNode = data.DocumentNode.SelectSingleNode(xName);
+                if (tNode != null)
+                    tDic["Occupation"] = ReplaceTrim(tNode.InnerText);
+
+                tempDic.Add(tDic);
+            }
+
+            return tempDic;
         }
 
         private Dictionary<string, string> ParseHTMLFillingHistoryTab(HtmlDocument data)
@@ -301,7 +357,6 @@ namespace GrabbingToSql
                 default:
                     return null;// TODO raise exception
             }
-
         }
     }
 }

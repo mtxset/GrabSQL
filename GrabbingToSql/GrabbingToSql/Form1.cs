@@ -15,6 +15,7 @@ namespace GrabbingToSql
 
         private void button1_Click(object sender, EventArgs e)
         {
+            List<Dictionary<string, string>> peopleDic = new List<Dictionary<string, string>>();
             Parser parser = new Parser();
             var tab = Parser.PageTab.People;
 
@@ -27,8 +28,23 @@ namespace GrabbingToSql
             foreach (string s in companies)
             {
                 if (s.Length != 0)
-                parser.AddNewRow(parser.ParseHTML(s, tab), ref table);
+                {
+                    parser.ParseHTML(out peopleDic, s, tab);
+                }
+
+                foreach (Dictionary<string, string> item in peopleDic)
+                {
+                    if (item != null)
+                        parser.AddNewRow(item, ref table);
+                }
             }
+            /*
+            foreach (string s in companies)
+            {
+                if (s.Length != 0)
+                    parser.AddNewRow(parser.ParseHTML(out peopleDic, s, tab), ref table);
+            }
+             */
 
             dataGridView1.DataSource = table;
         }
@@ -39,6 +55,11 @@ namespace GrabbingToSql
         }
 
         private void richTextBox1_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void statusStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
         {
 
         }
