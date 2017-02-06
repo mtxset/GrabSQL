@@ -17,15 +17,16 @@ namespace GrabbingToSql
         {
             Parser parser = new Parser();
             
-
-            DataTable table = parser.SetupTable();
+            DataTable table = parser.SetupTable(Parser.PageTab.People);
 
             var companies = richTextBox1.Lines;
 
+            //TODO: parse the text in list box
+            //TODO: implement async row adding
             foreach (string s in companies)
             {
                 if (s.Length != 0)
-                parser.AddNewRow(parser.ParseHTMLCompaniesHouse(parser.GetHtmlByCompany(s)), ref table);
+                parser.AddNewRow(parser.ParseHTML(s,Parser.PageTab.People), ref table);
             }
 
             dataGridView1.DataSource = table;
@@ -33,8 +34,7 @@ namespace GrabbingToSql
 
         private void button2_Click(object sender, EventArgs e)
         {
-            LoadConfig lc = new LoadConfig();
-            Dictionary<string, string> tempDic = lc.LoadFields();
+
         }
 
         private void richTextBox1_TextChanged(object sender, EventArgs e)

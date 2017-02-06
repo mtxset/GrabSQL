@@ -6,30 +6,6 @@ using System.Windows.Forms;
 
 namespace GrabbingToSql
 {
-    public class LoadConfig
-    {
-        public Dictionary<string, string> LoadFields()
-        {
-            Dictionary<string, string> tempDic = new Dictionary<string, string>();
-
-            string path = System.IO.Path.GetDirectoryName(Application.ExecutablePath) + "/fields.ini";
-            IniFile file = new IniFile(path);
-
-            string val = file.IniReadValue("Settings", "FieldCount");
-            int fieldCount = int.Parse(val);
-
-            if (fieldCount <= 0)
-                return tempDic;
-
-            for (int i = 0; i < fieldCount; i++)
-            {
-                tempDic.Add(file.IniReadValue("FieldNames", i.ToString()), file.IniReadValue("SQLFieldNames", i.ToString()));
-            }
-
-            return tempDic;
-        }
-    }
-
     public class IniFile
     {
         public string path;
