@@ -5,18 +5,9 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Diagnostics;
 
 namespace GrabbingToSql
 {
-    public static class Global
-    {
-        public static Dictionary<string, Dictionary<string, string>> fieldDictionaries = new Dictionary<string, Dictionary<string, string>>()
-        {
-
-        };
-    }
-
     public class Parser
     {
         private HtmlDocument htmlDoc;
@@ -31,6 +22,19 @@ namespace GrabbingToSql
             public Dictionary<string, string> LoadFields(PageTab tab = PageTab.Overview)
             {
                 string prefixName;
+                Dictionary<string, string> tempDic = new Dictionary<string, string>();
+
+                string path = System.IO.Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath) + "/fields.ini";
+                IniFile file = new IniFile(path);
+
+                if (tab == PageTab.LoadSiteData)
+                {
+                    tempDic.Add("Site", file.IniReadValue("SiteData", "Site"));
+                    tempDic.Add("OverviewSyntax", file.IniReadValue("SiteData", "OverviewSyntax"));
+                    tempDic.Add("PeopleSyntax", file.IniReadValue("SiteData", "PeopleSyntax"));
+                    tempDic.Add("FilingHistorySyntax", file.IniReadValue("SiteData", "FilingHistorySyntax"));
+                    return tempDic;
+                }
 
                 switch (tab)
                 {
@@ -46,11 +50,6 @@ namespace GrabbingToSql
                     default:
                         goto case PageTab.Overview;
                 }
-
-                Dictionary<string, string> tempDic = new Dictionary<string, string>();
-
-                string path = System.IO.Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath) + "/fields.ini";
-                IniFile file = new IniFile(path);
 
                 string val = file.IniReadValue("Settings", prefixName + "FieldCount");
                 int fieldCount = int.Parse(val);
@@ -71,7 +70,8 @@ namespace GrabbingToSql
         {
             Overview = 0,
             FilingHistory = 1,
-            People = 2
+            People = 2,
+            LoadSiteData = 3
         }
 
         private string ReturnPageTab(PageTab tab)
@@ -179,6 +179,16 @@ namespace GrabbingToSql
             htmlFields.Add("FilingHistory", new List<string>());
 
             fillHtmlFields();
+            loadSiteData();
+        }
+
+        private void loadSiteData()
+        {
+            ConfigLoader cLoader = new ConfigLoader();
+            Dictionary<string, string> tDic = cLoader.LoadFields(PageTab.LoadSiteData);
+
+            if (tDic["Site"].Length > 0)
+                initialSite = tDic["Site"];
         }
 
         private void fillHtmlFields()
@@ -209,7 +219,7 @@ namespace GrabbingToSql
             Init();
         }
 
-        public DataSet ParseAllHTML(string companyNumber =  "00889821")
+        public DataSet ParseAllHTML(string companyNumber =  "00889821", bool ParseOverview = true, bool ParseFilingHistory = true, bool ParsePeople = true)
         {
             DataSet ds = new DataSet();
 
@@ -217,12 +227,15 @@ namespace GrabbingToSql
             Parser parser = new Parser();
 
             //Overview
-            var tab = Parser.PageTab.Overview;
-            DataTable OverviewTable = parser.SetupTable(tab);
-            parser.AddNewRow(parser.ParseHTML(out tempDic, companyNumber, tab), ref OverviewTable);
-            ds.Tables.Add(OverviewTable);
-                
-            
+            if (ParseOverview)
+            { 
+                var tab = Parser.PageTab.Overview;
+                DataTable OverviewTable = parser.SetupTable(tab);
+                parser.AddNewRow(parser.ParseHTML(out tempDic, companyNumber, tab), ref OverviewTable);
+                ds.Tables.Add(OverviewTable);
+            }
+
+            /*
             // Filing History
             tab = Parser.PageTab.FilingHistory;
             DataTable FilingHistoryTable = parser.SetupTable(tab);
@@ -236,6 +249,7 @@ namespace GrabbingToSql
             tempDic.Clear();
             
             //People
+            
             tab = Parser.PageTab.People;
             DataTable PeopleTable = parser.SetupTable(tab);
             parser.ParseHTML(out tempDic, companyNumber, tab);
@@ -245,7 +259,8 @@ namespace GrabbingToSql
                     parser.AddNewRow(item, ref PeopleTable);
             }
             ds.Tables.Add(PeopleTable);
-            
+            */
+
             return ds;
         }
 
@@ -409,30 +424,80 @@ namespace GrabbingToSql
             return tempDic;
         }
 
+        public string TryObtainingCompanyNumber(string query = "SUPERCOINS LTD")
+        {
+            string url = "", companyNumbers = "";
+            StringBuilder sb = new StringBuilder();
+
+            url = string.Format("{0}search?q={1}", initialSite, query);
+
+            HtmlDocument data = webClient.Load(url);
+
+            string xcode = "//li[@class='type-company']//a[@href]";
+            HtmlNode tempNode = data.DocumentNode.SelectSingleNode(xcode);
+
+            if (tempNode == null)
+            {
+                throw new Exception("Sorry, could not find page for query!");
+            }
+
+            string temp = tempNode.Attributes["href"].Value;
+
+            try
+            { 
+                companyNumbers = temp.Replace("/company/", "");
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Sorry, could not find company number!");
+            }
+
+            return companyNumbers;
+        }
+
         private Dictionary<string, string> ParseHTMLOverviewTab(HtmlDocument data)
         {
             StringBuilder sb = new StringBuilder();
             Dictionary<string, string> dicDB = EmptyDictionary(PageTab.Overview);
             string tabName = ReturnPageTab(PageTab.Overview);
 
-            //TODO implement try
+            
             //TODO implement reading xcode form config file
             string xcode = "//*[@class=\"grid-row\"] | //dl | //*[@id=\"company-number\"] | //*[@id=\"company-name\"] | //*[@id=\"sic0\"]";
             HtmlNodeCollection tempNodes = data.DocumentNode.SelectNodes(xcode);
+
+            if (tempNodes == null)
+            {
+                string msg = "Sorry, could not find page for query!";
+                System.Windows.Forms.MessageBox.Show(msg);
+                throw new Exception(msg);
+            }
 
             sb = NodeCollectionToSB( tempNodes );
 
             string[] strData = ReplaceSplitTrim(sb);
 
-            for (int i = 0; i < strData.Length; i++)
-            {
-                for (int v = 0; v < htmlFields[ tabName ].Count; v++)
+            try
+            { 
+                for (int i = 0; i < strData.Length; i++)
                 {
-                    if ( strData[i].Contains( htmlFields[ tabName][v] ) )
+                    for (int v = 0; v < htmlFields[ tabName ].Count; v++)
                     {
-                        dicDB[htmlFields[ tabName ][v]] = strData[i + 1];
+                        if ( strData[i].Contains( htmlFields[ tabName][v] ) )
+                        {
+                            dicDB[htmlFields[ tabName ][v]] = strData[i + 1];
+                        }
                     }
                 }
+                //TODO: 101
+                dicDB[htmlFields["Overview"][1]] = strData[0];
+                dicDB[htmlFields["Overview"][7]] = strData[ strData.Length - 2];
+            }
+            catch
+            {
+                string msg = "Sorry, could not parse data";
+                System.Windows.Forms.MessageBox.Show(msg);
+                throw new Exception(msg);
             }
 
             return dicDB;
@@ -441,7 +506,7 @@ namespace GrabbingToSql
         private HtmlDocument GetHtmlByCompany( string company = "10581927", PageTab tab = PageTab.Overview)
         {
             string url;
-            //TODO: Load from config initial site and format
+            
             //TODO: implement exceptions for web content
             switch (tab)
             {
