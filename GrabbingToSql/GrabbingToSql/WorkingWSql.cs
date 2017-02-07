@@ -3,24 +3,26 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using System.Data;
+using System.Diagnostics;
 
 namespace GrabbingToSql
 {
     public class WorkingWSql
     {
-        private string CurrCompId;
+        private int CurrCompId;
         private MySqlConnection Connection;
+        private string[] FiNamesOverView, FiNamesPeople, FiNamesFillingHistory;
         public WorkingWSql(string userid, string password, string Server, string Database)
         {
             Parser.ConfigLoader cLoader = new Parser.ConfigLoader();
             Dictionary<string, string> tDicOverView = cLoader.LoadFields(Parser.PageTab.Overview);
-            string[] FiNamesOverView = tDicOverView.Values.ToArray();
+            FiNamesOverView = tDicOverView.Values.ToArray();
 
             Dictionary<string, string> tDicPeople = cLoader.LoadFields(Parser.PageTab.People);
-            string[] FiNamesPeople = tDicPeople.Values.ToArray();
+            FiNamesPeople = tDicPeople.Values.ToArray();
 
             Dictionary<string, string> tDicFillingHistory = cLoader.LoadFields(Parser.PageTab.FilingHistory);
-            string[] FiNamesFillingHistory = tDicFillingHistory.Values.ToArray();
+            FiNamesFillingHistory = tDicFillingHistory.Values.ToArray();
 
             if (InitializeDB(userid, password, Server, Database))
                 if (InitializeTables(FiNamesOverView, "OverView"))
@@ -36,14 +38,94 @@ namespace GrabbingToSql
 
         public bool UpdateTable(ref DataSet DataSetToUpdate)
         {
-            DataTable table1 = DataSetToUpdate.Tables[0];
+            DataTable Table = DataSetToUpdate.Tables[0];
+            foreach (DataRow TableRow in Table.Rows)
+            {
+                CurrCompId = int.Parse(TableRow.ItemArray[0].ToString());
+                if (CurrCompId == 0)
+                {
+                    MessageBox.Show("Error finding ogranization id");
+                    return false;
+                }
+
+                if (DeleteTableRows("OverView") && InsertTableRows("OverView", TableRow, FiNamesOverView))
+                {
+                    DataTable Table1 = DataSetToUpdate.Tables[1];
+                    foreach (DataRow TableRow1 in Table1.Rows)
+                    {
+                        if (DeleteTableRows("FillingHistory") && InsertTableRows("FillingHistory", TableRow1, FiNamesFillingHistory))
+                        {
+                            DataTable Table2 = DataSetToUpdate.Tables[2];
+                            foreach (DataRow TableRow2 in Table2.Rows)
+                            {
+                                if (DeleteTableRows("People") && InsertTableRows("People", TableRow1, FiNamesPeople))
+                                    return true;
+                            }
+                        }
+                    }
+                }
+                else return false;
+            }
+
             return false;
+        }
+
+        private bool InsertTableRows(string TableName, DataRow TableArray, string[] FiNames)
+        {
+            string QueryInsertTableRows = $@"INSERT INTO {TableName} (idComp";
+
+            foreach (string FiName in FiNames)
+            {
+                QueryInsertTableRows += $",{FiName}";
+            }
+
+            QueryInsertTableRows += $") VALUES ({CurrCompId}";
+
+            foreach (var Item in TableArray.ItemArray)
+            {
+                QueryInsertTableRows += $",'{Item}'";
+            }
+            QueryInsertTableRows += ")";
+
+            try
+            {
+                if (!OpenConnection()) return false;
+                MySqlCommand Command = new MySqlCommand(QueryInsertTableRows, Connection);
+                Command.ExecuteNonQuery();
+                if (!CloseConnection()) return false;
+
+                return true;
+            }
+            catch
+            {
+                MessageBox.Show("Error inserting table rows");
+                return false;
+            }
+        }
+
+        private bool DeleteTableRows(string TableName)
+        {
+            string QueryDeleteTableRows = $@"DELETE FROM {TableName} WHERE idComp={CurrCompId}";
+            try
+            {
+                if (!OpenConnection()) return false;
+                MySqlCommand Command = new MySqlCommand(QueryDeleteTableRows, Connection);
+                Command.ExecuteNonQuery();
+                if (!CloseConnection()) return false;
+
+                return true;
+            }
+            catch
+            {
+                MessageBox.Show("Error deleting table rows");
+                return false;
+            }
         }
 
         private bool InitializeTables(string[] FiNames, string TableName)
         {
             string QueryCreateTable1 = $@"CREATE TABLE IF NOT EXISTS {TableName} (
-id INT NOT NULL,
+id INT NOT NULL AUTO_INCREMENT,
 idComp INT NOT NULL,
 ";
             foreach (string FiName in FiNames)
