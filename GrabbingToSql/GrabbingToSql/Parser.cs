@@ -219,47 +219,50 @@ namespace GrabbingToSql
             Init();
         }
 
-        public DataSet ParseAllHTML(string companyNumber =  "00889821", bool ParseOverview = true, bool ParseFilingHistory = true, bool ParsePeople = true)
+        public DataSet ParseAllHTML(string companyNumber = "00889821", bool ParseOverview = true, bool ParseFilingHistory = true, bool ParsePeople = true)
         {
             DataSet ds = new DataSet();
-
+            PageTab tab;
             List<Dictionary<string, string>> tempDic = new List<Dictionary<string, string>>();
             Parser parser = new Parser();
 
             //Overview
             if (ParseOverview)
             { 
-                var tab = Parser.PageTab.Overview;
+                tab = Parser.PageTab.Overview;
                 DataTable OverviewTable = parser.SetupTable(tab);
                 parser.AddNewRow(parser.ParseHTML(out tempDic, companyNumber, tab), ref OverviewTable);
                 ds.Tables.Add(OverviewTable);
             }
 
-            /*
             // Filing History
-            tab = Parser.PageTab.FilingHistory;
-            DataTable FilingHistoryTable = parser.SetupTable(tab);
-            parser.ParseHTML(out tempDic, companyNumber, tab);
-            foreach (Dictionary<string, string> item in tempDic)
-            {
-                if (item != null)
-                    parser.AddNewRow(item, ref FilingHistoryTable);
+            if (ParseFilingHistory)
+            { 
+                tab = Parser.PageTab.FilingHistory;
+                DataTable FilingHistoryTable = parser.SetupTable(tab);
+                parser.ParseHTML(out tempDic, companyNumber, tab);
+                foreach (Dictionary<string, string> item in tempDic)
+                {
+                    if (item != null)
+                        parser.AddNewRow(item, ref FilingHistoryTable);
+                }
+                ds.Tables.Add(FilingHistoryTable);
+                tempDic.Clear();
             }
-            ds.Tables.Add(FilingHistoryTable);
-            tempDic.Clear();
-            
+
             //People
-            
-            tab = Parser.PageTab.People;
-            DataTable PeopleTable = parser.SetupTable(tab);
-            parser.ParseHTML(out tempDic, companyNumber, tab);
-            foreach (Dictionary<string, string> item in tempDic)
-            {
-                if (item != null)
-                    parser.AddNewRow(item, ref PeopleTable);
+            if (ParsePeople)
+            { 
+                tab = Parser.PageTab.People;
+                DataTable PeopleTable = parser.SetupTable(tab);
+                parser.ParseHTML(out tempDic, companyNumber, tab);
+                foreach (Dictionary<string, string> item in tempDic)
+                {
+                    if (item != null)
+                        parser.AddNewRow(item, ref PeopleTable);
+                }
+                ds.Tables.Add(PeopleTable);
             }
-            ds.Tables.Add(PeopleTable);
-            */
 
             return ds;
         }
