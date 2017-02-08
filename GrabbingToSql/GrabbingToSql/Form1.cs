@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
-using HtmlAgilityPack;
 using System.Collections.Generic;
 using System.Data;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using System.Threading.Tasks;
 
 namespace GrabbingToSql
@@ -12,14 +10,19 @@ namespace GrabbingToSql
     {
         private List<string> lastTextData;
         private Parser parser;
+        private DataTable allOverviewsTable;
   
-        private List<TabPage> tabPages;
-
         public enum InputDataType
         {
             CompanyNames = 0,
             CompanyNumber = 1
         }
+        
+        private void UpdateALLOverviewsTab(DataTable dt)
+        {
+            allOverviewsTable.ImportRow(dt.Rows[0]);
+            dataGridAll.DataSource = allOverviewsTable;
+        } 
 
         public async void GetTextData(List<string> ls, InputDataType type)
         {
@@ -31,10 +34,21 @@ namespace GrabbingToSql
                 if (type == InputDataType.CompanyNames)
                     tempCompNumber = await Task.Run(() => parser.TryObtainingCompanyNumber(compValue));
 
-                DataSet ds = await Task.Run(() => parser.ParseAllHTML(tempCompNumber));
+                DataSet ds = await Task.Run(() => parser.ParseAllHTML(tempCompNumber, true, false, false));
 
                 if (ds == null) return;
-                string companyName = ds.Tables["Overview"].Rows[0].ItemArray[1].ToString();
+
+                UpdateALLOverviewsTab( ds.Tables["Overview"] );
+                string companyName = "";
+
+                try
+                {
+                    companyName = ds.Tables["Overview"].Rows[0].ItemArray[1].ToString(); // TODO: 101
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show("Sorry, could not read compnay name!");
+                }
 
                 TabPage tp = new TabPage(companyName);
 
@@ -44,7 +58,6 @@ namespace GrabbingToSql
                 tp.Controls.Add(fc);
 
                 tabControl1.TabPages.Add(tp);
-                tabPages.Add(tp);
             }
         }
 
@@ -52,7 +65,7 @@ namespace GrabbingToSql
         {
             lastTextData = new List<string>();
             parser = new Parser();
-            tabPages = new List<TabPage>();
+            allOverviewsTable = parser.SetupTable(Parser.PageTab.Overview);
         }
         public Form1()
         {
