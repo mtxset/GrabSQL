@@ -12,6 +12,7 @@ namespace GrabbingToSql
         private int CurrCompId;
         private MySqlConnection Connection;
         private string[] FiNamesOverView, FiNamesPeople, FiNamesFillingHistory;
+
         public WorkingWSql(string userid, string password, string Server, string Database)
         {
             Parser.ConfigLoader cLoader = new Parser.ConfigLoader();
@@ -24,16 +25,41 @@ namespace GrabbingToSql
             Dictionary<string, string> tDicFillingHistory = cLoader.LoadFields(Parser.PageTab.FilingHistory);
             FiNamesFillingHistory = tDicFillingHistory.Values.ToArray();
 
-            if (InitializeDB(userid, password, Server, Database))
-                if (InitializeTables(FiNamesOverView, "OverView"))
-                    if (InitializeTables(FiNamesPeople, "People"))
-                        if (!InitializeTables(FiNamesFillingHistory, "FillingHistory"))
-                            return;
-                        else;
-                    else return;
-                else return;
-            else return;
+            if (InitializeDB(userid, password, Server, Database) && InitializeTables(FiNamesOverView, "OverView")
+                && InitializeTables(FiNamesPeople, "People") && InitializeTables(FiNamesFillingHistory, "FillingHistory")) return;
+        }
+
+        public bool ReadTable(int Compid, out DataSet DataSetRead)
+        {
+            DataSet ds = new DataSet();
+            DataSetRead = ds;
+
+            string QuerySelectTableRows = "SELECT ";
+            string AddComa = "";
+            foreach (string FiName in FiNamesOverView)
+            {
+                QuerySelectTableRows += $"{AddComa}{FiName}";
+                AddComa=",";
+            }
+            QuerySelectTableRows += $") FROM OverView WHERE (idComp={Compid})";
             
+
+            try
+            {
+                if (!OpenConnection()) return false;
+                MySqlDataAdapter sqlda = new MySqlDataAdapter(QuerySelectTableRows, Connection);
+                if (!CloseConnection()) return false;
+
+                sqlda.Fill(DataSetRead);
+                return true;
+            }
+            catch
+            {
+                MessageBox.Show("Error inserting table rows");
+                return false;
+            }
+
+            return false;
         }
 
         public bool UpdateTable(ref DataSet DataSetToUpdate)
