@@ -29,39 +29,26 @@ namespace GrabbingToSql
                 && InitializeTables(FiNamesPeople, "People") && InitializeTables(FiNamesFillingHistory, "FillingHistory")) return;
         }
 
-        public bool ReadTable(int Compid, out DataSet DataSetRead)
+        public bool ReadTables(int Compid, out DataSet DataSetRead)
         {
-            DataSet ds = new DataSet();
-            DataSetRead = ds;
+            DataTable Table1, Table2, Table3;
+            DataSetRead = new DataSet();
 
-            string QuerySelectTableRows = "SELECT ";
-            string AddComa = "";
-            foreach (string FiName in FiNamesOverView)
+            if (ReadFromTable(Compid, "OverView", FiNamesOverView, out Table1)&&(Table1.Rows.Count != 0))
             {
-                QuerySelectTableRows += $"{AddComa}{FiName}";
-                AddComa=",";
-            }
-            QuerySelectTableRows += $") FROM OverView WHERE (idComp={Compid})";
-            
-
-            try
-            {
-                if (!OpenConnection()) return false;
-                MySqlDataAdapter sqlda = new MySqlDataAdapter(QuerySelectTableRows, Connection);
-                if (!CloseConnection()) return false;
-
-                sqlda.Fill(DataSetRead);
-                return true;
-            }
-            catch
-            {
-                MessageBox.Show("Error inserting table rows");
-                return false;
+                if ((ReadFromTable(Compid, "FillingHistory", FiNamesFillingHistory, out Table2)) && (ReadFromTable(Compid, "People", FiNamesPeople, out Table3)))
+                {
+                    DataSetRead.Tables.Add(Table1);
+                    DataSetRead.Tables.Add(Table2);
+                    DataSetRead.Tables.Add(Table3);
+                    return true;
+                }
             }
 
             return false;
         }
 
+        
         public bool UpdateTable(ref DataSet DataSetToUpdate)
         {
             DataTable Table = DataSetToUpdate.Tables[0];
@@ -94,6 +81,35 @@ namespace GrabbingToSql
             }
 
             return false;
+        }
+
+        private bool ReadFromTable(int Compid, string TableName, string[] FiNames, out DataTable Table)
+        {
+            Table = new DataTable();
+            string QuerySelectTableRows = "SELECT ";
+            string AddComa = "";
+            foreach (string FiName in FiNames)
+            {
+                QuerySelectTableRows += $"{AddComa}{FiName}";
+                AddComa = ",";
+            }
+            QuerySelectTableRows += $" FROM {TableName} WHERE (idComp={Compid})";
+
+
+            try
+            {
+                if (!OpenConnection()) return false;
+                MySqlDataAdapter sqlda = new MySqlDataAdapter(QuerySelectTableRows, Connection);
+                if (!CloseConnection()) return false;
+
+                sqlda.Fill(Table);
+                return true;
+            }
+            catch
+            {
+                MessageBox.Show($"Error reading table {TableName}");
+                return false;
+            }
         }
 
         private bool InsertTableRows(string TableName, DataRow TableArray, string[] FiNames)

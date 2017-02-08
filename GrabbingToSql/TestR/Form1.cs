@@ -25,11 +25,12 @@ namespace TestR
             companies.Add("10571534");
             companies.Add("10537975");
 
-            DataSet DataSetToUpdate;
+            DataSet DataSetToUpdate, DS1;
             foreach (string s in companies)
             {
                 DataSetToUpdate = parser.ParseAllHTML(s);
                 SqlObj.UpdateTable(ref DataSetToUpdate);
+                SqlObj.ReadTables(10571534,out DS1);
             }
 
             
