@@ -189,7 +189,7 @@ idComp INT NOT NULL,
 ";
             foreach (string FiName in FiNames)
             {
-                QueryCreateTable1 += $"{FiName} VARCHAR(255),\r\n";
+                QueryCreateTable1 += $"{FiName} TEXT,\r\n";
             }
             QueryCreateTable1 += @"PRIMARY KEY (id), INDEX idCompInd (idComp))";
             try
