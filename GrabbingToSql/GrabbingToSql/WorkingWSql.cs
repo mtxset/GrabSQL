@@ -12,17 +12,18 @@ namespace GrabbingToSql
         private int CurrCompId;
         private MySqlConnection Connection;
         private string[] FiNamesOverView, FiNamesPeople, FiNamesFillingHistory;
+        private Dictionary<string, string> tDicOverView, tDicPeople, tDicFillingHistory;
 
         public WorkingWSql(string userid, string password, string Server, string Database)
         {
             Parser.ConfigLoader cLoader = new Parser.ConfigLoader();
-            Dictionary<string, string> tDicOverView = cLoader.LoadFields(Parser.PageTab.Overview);
+            tDicOverView = cLoader.LoadFields(Parser.PageTab.Overview);
             FiNamesOverView = tDicOverView.Values.ToArray();
 
-            Dictionary<string, string> tDicPeople = cLoader.LoadFields(Parser.PageTab.People);
+            tDicPeople = cLoader.LoadFields(Parser.PageTab.People);
             FiNamesPeople = tDicPeople.Values.ToArray();
 
-            Dictionary<string, string> tDicFillingHistory = cLoader.LoadFields(Parser.PageTab.FilingHistory);
+            tDicFillingHistory = cLoader.LoadFields(Parser.PageTab.FilingHistory);
             FiNamesFillingHistory = tDicFillingHistory.Values.ToArray();
 
             if (InitializeDB(userid, password, Server, Database) && InitializeTables(FiNamesOverView, "OverView")
@@ -41,6 +42,19 @@ namespace GrabbingToSql
             {
                 if ((ReadFromTable(Compid, "FillingHistory", FiNamesFillingHistory, ref Table2)) && (ReadFromTable(Compid, "People", FiNamesPeople, ref Table3)))
                 {
+                    foreach (var dic in tDicOverView)
+                    {
+                        Table1.Columns[dic.Value].ColumnName = dic.Key;
+                    }
+                    foreach (var dic in tDicFillingHistory)
+                    {
+                        Table2.Columns[dic.Value].ColumnName = dic.Key;
+                    }
+                    foreach (var dic in tDicPeople)
+                    {
+                        Table3.Columns[dic.Value].ColumnName = dic.Key;
+                    }
+
                     DataSetRead.Tables.Add(Table1);
                     DataSetRead.Tables.Add(Table2);
                     DataSetRead.Tables.Add(Table3);
