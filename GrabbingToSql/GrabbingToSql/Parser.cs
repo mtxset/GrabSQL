@@ -239,7 +239,8 @@ namespace GrabbingToSql
             tab = Parser.PageTab.FilingHistory;
             DataTable FilingHistoryTable = parser.SetupTable(tab);
             if (ParseFilingHistory)
-            { 
+            {
+
                 parser.ParseHTML(out tempDic, companyNumber, tab);
                 foreach (Dictionary<string, string> item in tempDic)
                 {
@@ -250,11 +251,12 @@ namespace GrabbingToSql
                 tempDic.Clear();
             }
 
-            //People
             tab = Parser.PageTab.People;
             DataTable PeopleTable = parser.SetupTable(tab);
+            //People
             if (ParsePeople)
-            { 
+            {
+
                 parser.ParseHTML(out tempDic, companyNumber, tab);
                 foreach (Dictionary<string, string> item in tempDic)
                 {
@@ -315,7 +317,7 @@ namespace GrabbingToSql
             for (int i = 0; i < strData.Length; i++)
             {
                 // TODO: so bad..
-                if ( strData[i].Contains("officers") )
+                if ( strData[i].Contains("officer") )
                 {
                     officers = int.Parse(strData[i - 1]);
                 }

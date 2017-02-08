@@ -14,6 +14,16 @@ namespace GrabbingToSql
         private string[] FiNamesOverView, FiNamesPeople, FiNamesFillingHistory;
         private Dictionary<string, string> tDicOverView, tDicPeople, tDicFillingHistory;
 
+        public void DropTables()
+        {
+            string query = $"DROP TABLE IF EXISTS overview,fillinghistory,people";
+            if (!OpenConnection()) return;
+            MySqlCommand Command = new MySqlCommand(query, Connection);
+            Command.ExecuteNonQuery();
+            if (!CloseConnection()) return;
+        }
+  
+
         public WorkingWSql(string userid, string password, string Server, string Database)
         {
             Parser.ConfigLoader cLoader = new Parser.ConfigLoader();
@@ -81,17 +91,20 @@ namespace GrabbingToSql
                 if (DeleteTableRows("OverView") && InsertTableRows("OverView", TableRow, FiNamesOverView))
                 {
                     DataTable Table1 = DataSetToUpdate.Tables[1];
+                    if (!DeleteTableRows("FillingHistory")) return false;
                     foreach (DataRow TableRow1 in Table1.Rows)
                     {
-                        if (DeleteTableRows("FillingHistory") && InsertTableRows("FillingHistory", TableRow1, FiNamesFillingHistory))
-                        {
-                            DataTable Table2 = DataSetToUpdate.Tables[2];
-                            foreach (DataRow TableRow2 in Table2.Rows)
-                            {
-                                if (DeleteTableRows("People") && InsertTableRows("People", TableRow1, FiNamesPeople))
-                                    return true;
-                            }
-                        }
+                        if (!InsertTableRows("FillingHistory", TableRow1, FiNamesFillingHistory))
+                            return false;
+                    }
+
+                    DataTable Table2 = DataSetToUpdate.Tables[2];
+                    if (!DeleteTableRows("People")) return false;
+                    if (Table2.Rows.Count == 0) return true;
+                    foreach (DataRow TableRow2 in Table2.Rows)
+                    {
+                        if (InsertTableRows("People", TableRow2, FiNamesPeople))
+                            return true;
                     }
                 }
                 else return false;

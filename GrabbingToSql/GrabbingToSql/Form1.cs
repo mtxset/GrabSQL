@@ -30,6 +30,8 @@ namespace GrabbingToSql
             lastTextData = ls;
             foreach (string compValue in ls)
             {
+                if (compValue.Length <= 0) return;
+
                 int companyNumber;
                 string tempCompNumber = compValue;
 
@@ -44,6 +46,9 @@ namespace GrabbingToSql
 
                 DataSet ds = new DataSet();
 
+                //ds = await Task.Run(() => parser.ParseAllHTML(tempCompNumber, true, true, true));
+
+                
                 if (!mysqlConn.ReadTables(companyNumber, out ds))
                 {
                     ds = await Task.Run(() => parser.ParseAllHTML(tempCompNumber, true, true, true));
@@ -53,7 +58,7 @@ namespace GrabbingToSql
                         MessageBox.Show("Sorry, could not update table");
                     }
                 }
-
+                
                 if (ds == null) return;
 
                 UpdateALLOverviewsTab( ds.Tables["Overview"] );
@@ -84,7 +89,10 @@ namespace GrabbingToSql
             lastTextData = new List<string>();
             parser = new Parser();
             allOverviewsTable = parser.SetupTable(Parser.PageTab.Overview);
-            mysqlConn = new WorkingWSql("mtxset", "lag007", "192.168.0.103", "companieshouse");
+            mysqlConn = new WorkingWSql("yuk", "yurak123", "192.168.0.103", "companieshouse");
+
+            mysqlConn.DropTables();
+            mysqlConn = new WorkingWSql("yuk", "yurak123", "192.168.0.103", "companieshouse");
         }
         public Form1()
         {
