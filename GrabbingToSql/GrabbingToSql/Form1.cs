@@ -89,10 +89,7 @@ namespace GrabbingToSql
             lastTextData = new List<string>();
             parser = new Parser();
             allOverviewsTable = parser.SetupTable(Parser.PageTab.Overview);
-            mysqlConn = new WorkingWSql("yuk", "yurak123", "192.168.0.103", "companieshouse");
-
-            mysqlConn.DropTables();
-            mysqlConn = new WorkingWSql("yuk", "yurak123", "192.168.0.103", "companieshouse");
+            mysqlConn = new WorkingWSql("mtxset", "lag007", "192.168.0.103", "companieshouse");
         }
         public Form1()
         {
