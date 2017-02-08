@@ -200,17 +200,17 @@ namespace GrabbingToSql
 
             for (int i = 0; i < tDicO.Count; i++)
             {
-                htmlFields["Overview"].Add(tDicO.Keys.ElementAt(i));
+                htmlFields[ReturnPageTab(PageTab.Overview)].Add(tDicO.Keys.ElementAt(i));
             }
 
             for (int i = 0; i < tDicP.Count; i++)
             {
-                htmlFields["People"].Add(tDicP.Keys.ElementAt(i));
+                htmlFields[ReturnPageTab(PageTab.People)].Add(tDicP.Keys.ElementAt(i));
             }
 
             for (int i = 0; i < tDicF.Count; i++)
             {
-                htmlFields["FilingHistory"].Add(tDicF.Keys.ElementAt(i));
+                htmlFields[ReturnPageTab(PageTab.FilingHistory)].Add(tDicF.Keys.ElementAt(i));
             }
         }
 
@@ -300,7 +300,6 @@ namespace GrabbingToSql
             string tabName = ReturnPageTab(PageTab.People);
             int officers = 0;
 
-            //< div class="appointments-list">
             string xcode = "//*[@id=\"company-appointments\"]";
             HtmlNodeCollection tempNodes = data.DocumentNode.SelectNodes(xcode);
 
@@ -330,7 +329,7 @@ namespace GrabbingToSql
             {
                 tDic = EmptyDictionary(PageTab.People);
 
-                xName = String.Format("//span[@id=\"officer-name-{0}\"]", i.ToString() );
+                xName = $"//span[@id=\"officer-name-{i}\"]";
                 tNode = data.DocumentNode.SelectSingleNode(xName);
                 if (tNode != null) 
                     tDic["Officer Name"] = ReplaceTrim(tNode.InnerText);
@@ -464,8 +463,6 @@ namespace GrabbingToSql
             Dictionary<string, string> dicDB = EmptyDictionary(PageTab.Overview);
             string tabName = ReturnPageTab(PageTab.Overview);
 
-            
-            //TODO implement reading xcode form config file
             string xcode = "//*[@class=\"grid-row\"] | //dl | //*[@id=\"company-number\"] | //*[@id=\"company-name\"] | //*[@id=\"sic0\"]";
             HtmlNodeCollection tempNodes = data.DocumentNode.SelectNodes(xcode);
 
@@ -492,7 +489,7 @@ namespace GrabbingToSql
                         }
                     }
                 }
-                //TODO: 101
+                // reading company name and SIC
                 dicDB[htmlFields["Overview"][1]] = strData[0];
                 dicDB[htmlFields["Overview"][7]] = strData[ strData.Length - 2];
             }
@@ -508,37 +505,27 @@ namespace GrabbingToSql
        
         private HtmlDocument GetHtmlByCompany( string company = "10581927", PageTab tab = PageTab.Overview)
         {
-            string url;
+            string url = "";
             
-            //TODO: implement exceptions for web content
             switch (tab)
             {
                 case PageTab.Overview:
-                    
-                   url = string.Format("{0}company/{1}", initialSite, company);
-
-                   htmlDoc = webClient.Load(url);
-
-                   return htmlDoc;
-
+                    url = string.Format("{0}company/{1}", initialSite, company);
+                    break;
                 case PageTab.People:
 
                     url = string.Format("{0}company/{1}/officers", initialSite, company);
-
-                    htmlDoc = webClient.Load(url);
-
-                    return htmlDoc;
-
+                    break;
                 case PageTab.FilingHistory:
-
                     url = string.Format("{0}company/{1}/filing-history", initialSite, company);
-
-                    htmlDoc = webClient.Load(url);
-
-                    return htmlDoc;
+                    break;
                 default:
-                    return null;// TODO raise exception
+                    return null;
             }
+
+            htmlDoc = webClient.Load(url);
+
+            return htmlDoc;
         }
     }
 }

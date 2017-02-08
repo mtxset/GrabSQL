@@ -39,7 +39,16 @@ namespace GrabbingToSql
                 if (ds == null) return;
 
                 UpdateALLOverviewsTab( ds.Tables["Overview"] );
-                string companyName = ds.Tables["Overview"].Rows[0].ItemArray[1].ToString();
+                string companyName = "";
+
+                try
+                {
+                    companyName = ds.Tables["Overview"].Rows[0].ItemArray[1].ToString(); // TODO: 101
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show("Sorry, could not read compnay name!");
+                }
 
                 TabPage tp = new TabPage(companyName);
 
