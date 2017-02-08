@@ -31,12 +31,15 @@ namespace GrabbingToSql
 
         public bool ReadTables(int Compid, out DataSet DataSetRead)
         {
-            DataTable Table1, Table2, Table3;
+            DataTable Table1 = new DataTable("Overview");
+            DataTable Table2 = new DataTable("FilingHistory");
+            DataTable Table3 = new DataTable("People");
+
             DataSetRead = new DataSet();
 
-            if (ReadFromTable(Compid, "OverView", FiNamesOverView, out Table1)&&(Table1.Rows.Count != 0))
+            if (ReadFromTable(Compid, "OverView", FiNamesOverView, ref Table1)&&(Table1.Rows.Count != 0))
             {
-                if ((ReadFromTable(Compid, "FillingHistory", FiNamesFillingHistory, out Table2)) && (ReadFromTable(Compid, "People", FiNamesPeople, out Table3)))
+                if ((ReadFromTable(Compid, "FillingHistory", FiNamesFillingHistory, ref Table2)) && (ReadFromTable(Compid, "People", FiNamesPeople, ref Table3)))
                 {
                     DataSetRead.Tables.Add(Table1);
                     DataSetRead.Tables.Add(Table2);
@@ -83,9 +86,9 @@ namespace GrabbingToSql
             return false;
         }
 
-        private bool ReadFromTable(int Compid, string TableName, string[] FiNames, out DataTable Table)
+        private bool ReadFromTable(int Compid, string TableName, string[] FiNames, ref DataTable Table)
         {
-            Table = new DataTable();
+           
             string QuerySelectTableRows = "SELECT ";
             string AddComa = "";
             foreach (string FiName in FiNames)

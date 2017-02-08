@@ -236,10 +236,10 @@ namespace GrabbingToSql
             }
 
             // Filing History
+            tab = Parser.PageTab.FilingHistory;
+            DataTable FilingHistoryTable = parser.SetupTable(tab);
             if (ParseFilingHistory)
             { 
-                tab = Parser.PageTab.FilingHistory;
-                DataTable FilingHistoryTable = parser.SetupTable(tab);
                 parser.ParseHTML(out tempDic, companyNumber, tab);
                 foreach (Dictionary<string, string> item in tempDic)
                 {
@@ -251,10 +251,10 @@ namespace GrabbingToSql
             }
 
             //People
+            tab = Parser.PageTab.People;
+            DataTable PeopleTable = parser.SetupTable(tab);
             if (ParsePeople)
             { 
-                tab = Parser.PageTab.People;
-                DataTable PeopleTable = parser.SetupTable(tab);
                 parser.ParseHTML(out tempDic, companyNumber, tab);
                 foreach (Dictionary<string, string> item in tempDic)
                 {

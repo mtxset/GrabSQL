@@ -10,6 +10,7 @@ namespace GrabbingToSql
     {
         private List<string> lastTextData;
         private Parser parser;
+        private WorkingWSql mysqlConn;
         private DataTable allOverviewsTable;
   
         public enum InputDataType
@@ -29,12 +30,29 @@ namespace GrabbingToSql
             lastTextData = ls;
             foreach (string compValue in ls)
             {
+                int companyNumber;
                 string tempCompNumber = compValue;
 
                 if (type == InputDataType.CompanyNames)
                     tempCompNumber = await Task.Run(() => parser.TryObtainingCompanyNumber(compValue));
 
-                DataSet ds = await Task.Run(() => parser.ParseAllHTML(tempCompNumber, true, false, false));
+                if (!int.TryParse(tempCompNumber, out companyNumber))
+                {
+                    MessageBox.Show($"Sorry, could not parse company number ({tempCompNumber}).");
+                    throw new Exception("Could not parse int to string");
+                }
+
+                DataSet ds = new DataSet();
+
+                if (!mysqlConn.ReadTables(companyNumber, out ds))
+                {
+                    ds = await Task.Run(() => parser.ParseAllHTML(tempCompNumber, true, true, true));
+
+                    if (!mysqlConn.UpdateTable(ref ds))
+                    {
+                        MessageBox.Show("Sorry, could not update table");
+                    }
+                }
 
                 if (ds == null) return;
 
@@ -66,6 +84,7 @@ namespace GrabbingToSql
             lastTextData = new List<string>();
             parser = new Parser();
             allOverviewsTable = parser.SetupTable(Parser.PageTab.Overview);
+            mysqlConn = new WorkingWSql("mtxset", "lag007", "192.168.0.103", "companieshouse");
         }
         public Form1()
         {
