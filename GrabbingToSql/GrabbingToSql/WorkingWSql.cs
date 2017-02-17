@@ -9,10 +9,12 @@ namespace GrabbingToSql
 {
     public class WorkingWSql
     {
-        private int CurrCompId;
+        private string CurrCompId;
         private MySqlConnection Connection;
         private string[] FiNamesOverView, FiNamesPeople, FiNamesFillingHistory;
         private Dictionary<string, string> tDicOverView, tDicPeople, tDicFillingHistory;
+        private Parser parser;
+
 
         public void DropTables()
         {
@@ -26,7 +28,9 @@ namespace GrabbingToSql
 
         public WorkingWSql(string userid, string password, string Server, string Database)
         {
-            Parser.ConfigLoader cLoader = new Parser.ConfigLoader();
+            ConfigLoader cLoader = new ConfigLoader();
+            parser = new Parser(cLoader);
+            
             tDicOverView = cLoader.LoadFields(Parser.PageTab.Overview);
             FiNamesOverView = tDicOverView.Values.ToArray();
 
@@ -40,8 +44,9 @@ namespace GrabbingToSql
                 && InitializeTables(FiNamesPeople, "People") && InitializeTables(FiNamesFillingHistory, "FillingHistory")) return;
         }
 
-        public bool ReadTables(int Compid, out DataSet DataSetRead)
+        public bool ReadTables(string Compid, out DataSet DataSetRead)
         {
+
             DataTable Table1 = new DataTable("Overview");
             DataTable Table2 = new DataTable("FilingHistory");
             DataTable Table3 = new DataTable("People");
@@ -52,6 +57,7 @@ namespace GrabbingToSql
             {
                 if ((ReadFromTable(Compid, "FillingHistory", FiNamesFillingHistory, ref Table2)) && (ReadFromTable(Compid, "People", FiNamesPeople, ref Table3)))
                 {
+                    
                     foreach (var dic in tDicOverView)
                     {
                         Table1.Columns[dic.Value].ColumnName = dic.Key;
@@ -64,7 +70,7 @@ namespace GrabbingToSql
                     {
                         Table3.Columns[dic.Value].ColumnName = dic.Key;
                     }
-
+                    
                     DataSetRead.Tables.Add(Table1);
                     DataSetRead.Tables.Add(Table2);
                     DataSetRead.Tables.Add(Table3);
@@ -81,8 +87,10 @@ namespace GrabbingToSql
             DataTable Table = DataSetToUpdate.Tables[0];
             foreach (DataRow TableRow in Table.Rows)
             {
-                CurrCompId = int.Parse(TableRow.ItemArray[0].ToString());
-                if (CurrCompId == 0)
+                //CurrCompId = int.Parse(TableRow.ItemArray[0].ToString());
+                CurrCompId=TableRow.ItemArray[0].ToString();
+
+                if (string.IsNullOrEmpty(CurrCompId))
                 {
                     MessageBox.Show("Error finding ogranization id");
                     return false;
@@ -113,7 +121,7 @@ namespace GrabbingToSql
             return false;
         }
 
-        private bool ReadFromTable(int Compid, string TableName, string[] FiNames, ref DataTable Table)
+        private bool ReadFromTable(string Compid, string TableName, string[] FiNames, ref DataTable Table)
         {
            
             string QuerySelectTableRows = "SELECT ";
@@ -198,7 +206,7 @@ namespace GrabbingToSql
         {
             string QueryCreateTable1 = $@"CREATE TABLE IF NOT EXISTS {TableName} (
 id INT NOT NULL AUTO_INCREMENT,
-idComp INT NOT NULL,
+idComp CHAR(255) NOT NULL,
 ";
             foreach (string FiName in FiNames)
             {

@@ -18,8 +18,7 @@ namespace TestR
             InitializeComponent();
             WorkingWSql SqlObj = new WorkingWSql("yuk","yurak123","192.168.0.103", "companieshouse");
 
-            Parser parser = new Parser();
-
+            Parser parser = new Parser(new ConfigLoader());
 
             List<string> companies = new List<string>();
             companies.Add("10571534");
@@ -30,7 +29,7 @@ namespace TestR
             {
                 DataSetToUpdate = parser.ParseAllHTML(s);
                 SqlObj.UpdateTable(ref DataSetToUpdate);
-                SqlObj.ReadTables(10571534,out DS1);
+                SqlObj.ReadTables("10571534",out DS1);
             }
 
             

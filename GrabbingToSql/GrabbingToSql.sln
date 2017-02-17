@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrabbingToSql", "GrabbingTo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestR", "TestR\TestR.csproj", "{BCA9D6EF-0BFE-422E-A4EA-73775617A006}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrabbingToSqlTests", "GrabbingToSqlTests\GrabbingToSqlTests.csproj", "{8200C45B-A5FC-4546-AA71-9F4CD6356D09}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{BCA9D6EF-0BFE-422E-A4EA-73775617A006}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BCA9D6EF-0BFE-422E-A4EA-73775617A006}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BCA9D6EF-0BFE-422E-A4EA-73775617A006}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8200C45B-A5FC-4546-AA71-9F4CD6356D09}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8200C45B-A5FC-4546-AA71-9F4CD6356D09}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8200C45B-A5FC-4546-AA71-9F4CD6356D09}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8200C45B-A5FC-4546-AA71-9F4CD6356D09}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

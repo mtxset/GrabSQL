@@ -37,6 +37,7 @@ namespace GrabbingToSql
 
         private void button1_Click_1(object sender, EventArgs e)
         {
+            //mainForm.Get(GetData(), Form1.InputDataType.CompanyNumber);
             mainForm.GetTextData(GetData(), Form1.InputDataType.CompanyNumber);
             Close();
         }

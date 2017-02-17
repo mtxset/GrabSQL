@@ -5,66 +5,21 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace GrabbingToSql
 {
     public class Parser
     {
-        private HtmlDocument htmlDoc;
-        private HtmlWeb webClient;
-        private String initialSite;
+        private HtmlDocument _htmlDoc;
+        private HtmlWeb _webClient;
+        private String _initialSite;
 
-        // TODO: load list and fill ALL lists from config, pageTAB, initialSite, formats for pageTabs
+        // TODO: load list and fill ALL lists from config, pageTAB, _initialSite, formats for pageTabs
         private Dictionary<string, List<string>> htmlFields;
-
-        public class ConfigLoader
-        {
-            public Dictionary<string, string> LoadFields(PageTab tab = PageTab.Overview)
-            {
-                string prefixName;
-                Dictionary<string, string> tempDic = new Dictionary<string, string>();
-
-                string path = System.IO.Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath) + "/fields.ini";
-                IniFile file = new IniFile(path);
-
-                if (tab == PageTab.LoadSiteData)
-                {
-                    tempDic.Add("Site", file.IniReadValue("SiteData", "Site"));
-                    tempDic.Add("OverviewSyntax", file.IniReadValue("SiteData", "OverviewSyntax"));
-                    tempDic.Add("PeopleSyntax", file.IniReadValue("SiteData", "PeopleSyntax"));
-                    tempDic.Add("FilingHistorySyntax", file.IniReadValue("SiteData", "FilingHistorySyntax"));
-                    return tempDic;
-                }
-
-                switch (tab)
-                {
-                    case PageTab.Overview:
-                        prefixName = "Overview";
-                        break;
-                    case PageTab.FilingHistory:
-                        prefixName = "FilingHistory";
-                        break;
-                    case PageTab.People:
-                        prefixName = "People";
-                        break;
-                    default:
-                        goto case PageTab.Overview;
-                }
-
-                string val = file.IniReadValue("Settings", prefixName + "FieldCount");
-                int fieldCount = int.Parse(val);
-
-                if (fieldCount <= 0)
-                    return tempDic;
-
-                for (int i = 0; i < fieldCount; i++)
-                {
-                    tempDic.Add(file.IniReadValue(prefixName + "FieldNames", i.ToString()), file.IniReadValue(prefixName + "SQLFieldNames", i.ToString()));
-                }
-
-                return tempDic;
-            }
-        }
+        private readonly IConfigLoader _configLoader;
 
         public enum PageTab
         {
@@ -89,9 +44,10 @@ namespace GrabbingToSql
             }
         }
 
-        public void AddNewRow(Dictionary<string, string> dicDB, ref DataTable dataT)
+        public void AddNewRow(Dictionary<string, string> dicDb, ref DataTable dataT)
         {
-            dataT.Rows.Add( dicDB.Values.ToArray() );
+            string[] _buffer = dicDb.Values.ToArray();
+            dataT.Rows.Add( _buffer );
         }
 
         private Dictionary<string, string> EmptyDictionary(PageTab tab)
@@ -101,14 +57,16 @@ namespace GrabbingToSql
 
             for (int i = 0; i < htmlFields[ tabName ].Count; i++)
             {
-                tDic.Add( htmlFields[ tabName][i], "" );
+                tDic.Add(htmlFields[tabName][i], null );
             }
             return tDic;
         }
 
-        private string ReplaceTrim( string sb )
+        public string ReplaceTrim( string sb )
         {
-            string ts = Regex.Replace(sb.ToString(), @"^\s+$[\r\n]*", "", RegexOptions.Multiline);
+            if (sb == null) return null;
+
+            string ts = Regex.Replace(sb, @"^\s+$[\r\n]*", "", RegexOptions.Multiline);
             ts = ts.Trim();
 
             return ts;
@@ -117,7 +75,7 @@ namespace GrabbingToSql
         private string[] ReplaceSplitTrim( StringBuilder sb)
         {
             string ts = Regex.Replace(sb.ToString(), @"^\s+$[\r\n]*", "", RegexOptions.Multiline);
-            string[] strData = ts.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
+            string[] strData = ts.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
 
             for (int i = 0; i<strData.Length; i++)
             {
@@ -151,6 +109,19 @@ namespace GrabbingToSql
             return sb;
         }
 
+        /// <summary>
+        /// Fills empty table with culumns and data types, which are read from config file.
+        /// </summary>
+        /// <param name="dataTable">Empty datatable</param>
+        /// <param name="tab">Table name (Overview, Filing History, People)</param>
+        /// <returns>True if no error</returns>
+        public static bool FormEmptyTable(ref DataTable dataTable, PageTab tab)
+        {
+            dataTable = new DataTable();
+
+            return false;
+        }
+
         public DataTable SetupTable( PageTab tab = PageTab.Overview )
         {
             string tabName = ReturnPageTab(tab);
@@ -159,6 +130,25 @@ namespace GrabbingToSql
 
             for (int i = 0; i < htmlFields[tabName].Count; i++)
             {
+                if (tab == PageTab.Overview)
+                {
+                    if (i == 5 || i == 6 || i == 8 || i == 4) // fields which are dates
+                    { 
+                        tb1.Columns.Add(htmlFields[tabName][i], typeof(DateTime));
+                        continue;
+                    }
+                }
+               
+                /*
+                if (tab == PageTab.FilingHistory)
+                {
+                    if (i == 0)
+                    {
+                        tb1.Columns.Add(htmlFields[tabName][i], typeof(DateTime));
+                        continue;
+                    }
+                }*/
+
                 tb1.Columns.Add(htmlFields[tabName][i]);
             }
 
@@ -167,9 +157,9 @@ namespace GrabbingToSql
 
         private void Init()
         {
-            htmlDoc = new HtmlDocument();
-            webClient = new HtmlWeb();
-            initialSite = "https://beta.companieshouse.gov.uk/";
+            _htmlDoc = new HtmlDocument();
+            _webClient = new HtmlWeb();
+            _initialSite = "https://beta.companieshouse.gov.uk/";
 
             htmlFields = new Dictionary<string, List<string>>();
 
@@ -178,25 +168,24 @@ namespace GrabbingToSql
             htmlFields.Add("People", new List<string>());
             htmlFields.Add("FilingHistory", new List<string>());
 
-            fillHtmlFields();
-            loadSiteData();
+            FillHtmlFields();
+            LoadSiteData();
         }
 
-        private void loadSiteData()
+        private void LoadSiteData()
         {
-            ConfigLoader cLoader = new ConfigLoader();
-            Dictionary<string, string> tDic = cLoader.LoadFields(PageTab.LoadSiteData);
+            
+            Dictionary<string, string> tDic = _configLoader.LoadFields(PageTab.LoadSiteData);
 
             if (tDic["Site"].Length > 0)
-                initialSite = tDic["Site"];
+                _initialSite = tDic["Site"];
         }
 
-        private void fillHtmlFields()
+        private void FillHtmlFields()
         {
-            ConfigLoader cLoader = new ConfigLoader();
-            Dictionary<string, string> tDicO = cLoader.LoadFields(PageTab.Overview);
-            Dictionary<string, string> tDicP = cLoader.LoadFields(PageTab.People);
-            Dictionary<string, string> tDicF = cLoader.LoadFields(PageTab.FilingHistory);
+            Dictionary<string, string> tDicO = _configLoader.LoadFields(PageTab.Overview);
+            Dictionary<string, string> tDicP = _configLoader.LoadFields(PageTab.People);
+            Dictionary<string, string> tDicF = _configLoader.LoadFields(PageTab.FilingHistory);
 
             for (int i = 0; i < tDicO.Count; i++)
             {
@@ -214,25 +203,26 @@ namespace GrabbingToSql
             }
         }
 
-        public Parser()
+        public Parser(IConfigLoader configLoader)
         {
+            _configLoader = configLoader;
             Init();
         }
 
-        public DataSet ParseAllHTML(string companyNumber = "00889821", bool ParseOverview = true, bool ParseFilingHistory = true, bool ParsePeople = true)
+        public DataSet ParseAllHTML(string companyNumber = "00889821", bool parseOverview = true, bool ParseFilingHistory = true, bool ParsePeople = true)
         {
-            DataSet ds = new DataSet();
+            var ds = new DataSet();
             PageTab tab;
-            List<Dictionary<string, string>> tempDic = new List<Dictionary<string, string>>();
-            Parser parser = new Parser();
+            var tempDic = new List<Dictionary<string, string>>();
+            var parser = new Parser(new ConfigLoader());
 
             //Overview
-            if (ParseOverview)
+            if (parseOverview)
             { 
                 tab = Parser.PageTab.Overview;
-                DataTable OverviewTable = parser.SetupTable(tab);
-                parser.AddNewRow(parser.ParseHTML(out tempDic, companyNumber, tab), ref OverviewTable);
-                ds.Tables.Add(OverviewTable);
+                DataTable overviewTable = parser.SetupTable(tab);
+                parser.AddNewRow(parser.ParseHTML(out tempDic, companyNumber, tab), ref overviewTable);
+                ds.Tables.Add(overviewTable);
             }
 
             // Filing History
@@ -372,7 +362,6 @@ namespace GrabbingToSql
             return tempDic;
         }
 
-        
         private List<Dictionary<string, string>> ParseHTMLFilingHistoryTab(HtmlDocument data, string companyNumber)
         {
             List<Dictionary<string, string>> tempDic = new List<Dictionary<string, string>>();
@@ -401,8 +390,8 @@ namespace GrabbingToSql
 
             for (int p = 1; p <= maxPage; p++)
             {
-                string url = string.Format("{0}company/{1}/filing-history?page={2}", initialSite, companyNumber, p);
-                data = webClient.Load(url);
+                string url = string.Format("{0}company/{1}/filing-history?page={2}", _initialSite, companyNumber, p);
+                data = _webClient.Load(url);
 
                 List<List<string>> table = data.DocumentNode.SelectSingleNode("//table[@id='fhTable']")
                 .Descendants("tr")
@@ -433,16 +422,17 @@ namespace GrabbingToSql
             string url = "", companyNumbers = "";
             StringBuilder sb = new StringBuilder();
 
-            url = string.Format("{0}search?q={1}", initialSite, query);
+            url = string.Format("{0}search?q={1}", _initialSite, query);
 
-            HtmlDocument data = webClient.Load(url);
+            HtmlDocument data = _webClient.Load(url);
 
             string xcode = "//li[@class='type-company']//a[@href]";
             HtmlNode tempNode = data.DocumentNode.SelectSingleNode(xcode);
 
             if (tempNode == null)
             {
-                throw new Exception("Sorry, could not find page for query!");
+                System.Windows.Forms.MessageBox.Show($"Could not find company: {query}");
+                return "";
             }
 
             string temp = tempNode.Attributes["href"].Value;
@@ -459,13 +449,90 @@ namespace GrabbingToSql
             return companyNumbers;
         }
 
-        private Dictionary<string, string> ParseHTMLOverviewTab(HtmlDocument data)
+        private async Task<string> GetResponse(string request)
         {
-            StringBuilder sb = new StringBuilder();
-            Dictionary<string, string> dicDB = EmptyDictionary(PageTab.Overview);
-            string tabName = ReturnPageTab(PageTab.Overview);
+            var uri = new Uri("https://api.companieshouse.gov.uk");
 
-            string xcode = "//*[@class=\"grid-row\"] | //dl | //*[@id=\"company-number\"] | //*[@id=\"company-name\"] | //*[@id=\"sic0\"]";
+            var cl = new HttpClient {BaseAddress = uri};
+
+            cl.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", "Basic NVdNOEhuSXlOaGlVNndNU3hfbkZNZTZWaWQ4R3BaUndMNVlwc1ZUZDo=");
+            var response = await cl.GetAsync(request);
+            response.EnsureSuccessStatusCode();
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            return responseBody;
+        }
+
+        public bool FormFilingHistoryDataTable(JSON.FilingHistory.RootObject filingHistory, out DataTable dt)
+        {
+            dt = SetupTable(PageTab.FilingHistory);
+
+            if (filingHistory == null) return false;
+
+            foreach (var item in filingHistory.items)
+            {
+                object[] data = new object[dt.Columns.Count];
+
+                data[0] = DateTime.Parse(item.date);
+                data[1] = item.type;
+                data[2] = item.description;
+                data[4] = item.links.self;
+
+                dt.Rows.Add(data);
+            }
+
+            return true;
+        }
+
+        public bool FormOverviewDataTable(JSON.Overview.RootObject overview, out DataTable dt)
+        {
+            dt = SetupTable(PageTab.Overview);
+
+            if (overview == null)
+                return false;
+
+            object[] data = new object[dt.Columns.Count];
+
+            data[0] = overview.company_number;
+            data[1] = overview.company_name;
+            data[2] = overview.registered_office_address.address_line_1;
+            data[3] = overview.company_status;
+            data[4] = DateTime.Parse(overview.date_of_creation);
+            data[5] = DateTime.Parse(overview.accounts.next_due);
+            data[6] = DateTime.Parse(overview.confirmation_statement.next_due);
+            data[7] = overview.sic_codes[0];
+            data[8] = DateTime.Now;
+
+            dt.Rows.Add(data);
+
+            return true;
+        }
+
+        public async Task<JSON.FilingHistory.RootObject> RetriveFilingHistoryJSON(string companyNumber)
+        {
+            string responseBody = await GetResponse($"company/{companyNumber}/filing-history/");
+
+            JSON.FilingHistory.RootObject o = JsonConvert.DeserializeObject<JSON.FilingHistory.RootObject>(responseBody);
+
+            return o;
+        }
+
+        public async Task<JSON.Overview.RootObject> RetrieveOverviewJSON(string companyNumber)
+        {
+            string responseBody = await GetResponse($"company/{companyNumber}");
+
+            JSON.Overview.RootObject overview = JsonConvert.DeserializeObject<JSON.Overview.RootObject>(responseBody);
+            
+            return overview;
+        }
+
+        public  Dictionary<string, string> ParseHTMLOverviewTab(HtmlDocument data)
+        {
+            var dicDB = EmptyDictionary(PageTab.Overview);
+            if (dicDB == null) throw new ArgumentNullException(nameof(dicDB));
+            var tabName = ReturnPageTab(PageTab.Overview);
+
+            var xcode = "//*[@class=\"grid-row\"] | //dl | //*[@id=\"company-number\"] | //*[@id=\"company-name\"] | //*[@id=\"sic0\"] | //*[@id='no-sic']";
             HtmlNodeCollection tempNodes = data.DocumentNode.SelectNodes(xcode);
 
             if (tempNodes == null)
@@ -475,24 +542,31 @@ namespace GrabbingToSql
                 throw new Exception(msg);
             }
 
-            sb = NodeCollectionToSB( tempNodes );
+            var sb = NodeCollectionToSB( tempNodes );
 
-            string[] strData = ReplaceSplitTrim(sb);
+            var strData = ReplaceSplitTrim(sb);
 
             try
             { 
                 for (int i = 0; i < strData.Length; i++)
                 {
-                    for (int v = 0; v < htmlFields[ tabName ].Count; v++)
+                    for (int v = 0; v < htmlFields[tabName].Count; v++)
                     {
-                        if ( strData[i].Contains( htmlFields[ tabName][v] ) )
+                        string _htmlField = htmlFields[tabName][v];
+                        if ( strData[i].Contains( _htmlField ) )
                         {
-                            dicDB[htmlFields[ tabName ][v]] = strData[i + 1];
+                            int offset = 1;
+                            if (v == 5 || v == 6) // Accounts and Confirmation Statement  CUSTOMDATE different position
+                            {
+                                offset = 2;
+                                strData[i + offset] = strData[i + offset].Replace("due by", "");
+                            }
+                            dicDB[htmlFields[ tabName ][v]] = strData[i + offset];
                         }
                     }
                 }
                 // reading company name and SIC
-                dicDB[htmlFields["Overview"][1]] = strData[0];
+                dicDB[htmlFields["Overview"][1]] = strData[0].Replace("&amp;", "&");
                 dicDB[htmlFields["Overview"][7]] = strData[ strData.Length - 2];
             }
             catch
@@ -512,22 +586,22 @@ namespace GrabbingToSql
             switch (tab)
             {
                 case PageTab.Overview:
-                    url = string.Format("{0}company/{1}", initialSite, company);
+                    url = string.Format("{0}company/{1}", _initialSite, company);
                     break;
                 case PageTab.People:
 
-                    url = string.Format("{0}company/{1}/officers", initialSite, company);
+                    url = string.Format("{0}company/{1}/officers", _initialSite, company);
                     break;
                 case PageTab.FilingHistory:
-                    url = string.Format("{0}company/{1}/filing-history", initialSite, company);
+                    url = string.Format("{0}company/{1}/filing-history", _initialSite, company);
                     break;
                 default:
                     return null;
             }
 
-            htmlDoc = webClient.Load(url);
+            _htmlDoc = _webClient.Load(url);
 
-            return htmlDoc;
+            return _htmlDoc;
         }
     }
 }

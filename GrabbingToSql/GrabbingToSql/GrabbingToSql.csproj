@@ -33,6 +33,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ClosedXML, Version=0.86.0.0, Culture=neutral, PublicKeyToken=fd1eb21b62ae805b, processorArchitecture=MSIL">
+      <HintPath>..\packages\ClosedXML.0.86.0\lib\net40\ClosedXML.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DocumentFormat.OpenXml, Version=2.5.5631.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\DocumentFormat.OpenXml.2.5\lib\DocumentFormat.OpenXml.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="HtmlAgilityPack, Version=1.4.9.4, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
       <HintPath>..\packages\HtmlAgilityPack.1.4.9.4\lib\Net45\HtmlAgilityPack.dll</HintPath>
       <Private>True</Private>
@@ -41,8 +49,18 @@
       <HintPath>..\packages\MySql.Data.6.9.9\lib\net45\MySql.Data.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="NSubstitute, Version=1.10.0.0, Culture=neutral, PublicKeyToken=92dd2e9066daa5ca, processorArchitecture=MSIL">
+      <HintPath>..\packages\NSubstitute.1.10.0.0\lib\net45\NSubstitute.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.EnterpriseServices" />
+    <Reference Include="System.Web.Services" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -54,6 +72,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConfigLoader.cs" />
     <Compile Include="FieldControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -66,7 +85,16 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\VATInputForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\VATInputForm.Designer.cs">
+      <DependentUpon>VATInputForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="IConfigLoader.cs" />
     <Compile Include="IniFile.cs" />
+    <Compile Include="JSON\FilingHistory.cs" />
+    <Compile Include="JSON\Overview.cs" />
     <Compile Include="ParseIntForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -88,7 +116,17 @@
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
+    <Compile Include="Services\VAT.cs" />
+    <Compile Include="Utils.cs" />
+    <Compile Include="Web References\eu.europa.ec\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.map</DependentUpon>
+    </Compile>
     <Compile Include="WorkingWSql.cs" />
+    <EmbeddedResource Include="Forms\VATInputForm.resx">
+      <DependentUpon>VATInputForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ParseIntForm.resx">
       <DependentUpon>ParseIntForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -104,9 +142,9 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <None Include="fields.ini">
+    <Content Include="fields.ini">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    </Content>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -117,6 +155,14 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <None Include="Web References\eu.europa.ec\checkVatService.wsdl" />
+    <None Include="Web References\eu.europa.ec\matchCode.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\eu.europa.ec\Reference.map">
+      <Generator>MSDiscoCodeGenerator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -130,6 +176,25 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Icons\" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <ItemGroup>
+    <WebReferences Include="Web References\" />
+  </ItemGroup>
+  <ItemGroup>
+    <WebReferenceUrl Include="http://ec.europa.eu/taxation_customs/vies/checkVatService.wsdl">
+      <UrlBehavior>Dynamic</UrlBehavior>
+      <RelPath>Web References\eu.europa.ec\</RelPath>
+      <UpdateFromURL>http://ec.europa.eu/taxation_customs/vies/checkVatService.wsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>GrabbingToSql_eu_europa_ec_checkVatService</CachedSettingsPropName>
+    </WebReferenceUrl>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
